@@ -13,11 +13,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&display=swap"
         rel="stylesheet">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
     <style>
         body {
-            background-color: #B6C0FD;
+            background-color: #8790ce;
             font-family: 'Roboto Condensed', sans-serif;
             font-size: 25px;
             margin: 0;
@@ -29,32 +29,97 @@
 
         .container {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
-            width: 90%;
+            flex-wrap: wrap;
             max-width: 1200px;
         }
 
         .big-box {
             background-color: #ffffff;
             width: 30%;
-            height: 48%;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            height: 300px;
+            box-shadow: 0 4px 10px rgba(130, 62, 157, 0.3);
             border-radius: 10px;
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 15px;
+            transition: box-shadow 0.3s, transform 0.3s;
+            cursor: pointer;
+        }
+
+        .big-box:hover {
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+            transform: translateY(-5px);
+        }
+
+        .big-box.active {
+            box-shadow: 0 0 25px 1px #7f7d7d;
+        }
+
+        .fa-microphone {
+            font-size: 150px;
+            color: #333;
+        }
+        
+        .fa-file-pdf {
+            font-size: 150px;
+            color: #333;
+        }
+        
+        .fa-book {
+            font-size: 150px;
+            color: #333;
+        }
+
+        h1 {
+            margin-top: 10px;
+            color: #000;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <div class="big-box ">
-            <i style='font-size: 150px; ' class="fa-solid fa-microphone"></i>
-            <h1 style="color:rgb(0, 0, 0)">Live Caption</h1>
+        <!-- First box -->
+       
+            
+        <div class="big-box" onclick="toggleHighlight(this)">
+            <i class="fa-solid fa-microphone"></i>
+            <h1>Live Caption</h1>
+        
+            </div>
+
+        <!-- Second box -->
+        
+        <div class="big-box" onclick="toggleHighlight(this)">
+            <i class="fa-solid fa-file-pdf"></i>
+            <h1>PDF</h1>
+        
         </div>
-        <div class="big-box "></div>
-        <div class="big-box "></div>
+
+        <!-- Third box -->
+        <div class="big-box" onclick="toggleHighlight(this)">
+            <i class="fa-solid fa-book"></i>
+            <h1>Summarize</h1>
+        </div>
+      
     </div>
+
+    <script>
+        // Function to toggle the "active" class for the clicked box
+        function toggleHighlight(element) {
+            // Remove the "active" class from all boxes
+            document.querySelectorAll('.big-box').forEach(box => {
+                box.classList.remove('active');
+            });
+            // Add the "active" class to the clicked box
+            element.classList.add('active');
+        }
+    </script>
 
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
         integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
