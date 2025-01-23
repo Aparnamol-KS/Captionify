@@ -1,0 +1,65 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual environment files
+env/
+venv/
+*.venv
+*.env
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Logs
+logs/
+*.log
+
+# TensorBoard logs
+runs/
+events.out.*
+
+# Dataset files
+*.csv
+*.tsv
+*.json
+*.h5
+*.pkl
+*.db
+
+# Model weights or checkpoints
+*.ckpt
+*.h5
+*.pt
+*.pth
+*.bin
+
+# Cache files for training
+*.cache
+*.tfrecord
+
+# Intermediate training files
+*.epoch
+*.tmp
+
+# Hugging Face model files
+*.lock
+output_dir/
+results/
+*.txt
+*.jsonl
+
+# VSCode / IDE specific files
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Node modules (if using JavaScript/TypeScript in frontend)
+node_modules/
+
+# Python environment configuration
+.env
