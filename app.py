@@ -1,20 +1,15 @@
-from flask import Flask, render_template, flash
-from flask_wtf import FlaskForm
-from wtforms import StringField,SubmitField
-from wtforms.validators import DataRequired
+from flask import Flask, render_template
+
+
 #create flask instance
 app= Flask(__name__)
-#create a route decorator
-
-#create form class
-
-app.config['SECRET_KEY'] = "my super secret key that on one is supposed to know"
 
 #home page
 @app.route('/')
 
 def home():
     return render_template("home.html")
+
 #index page
 @app.route('/index')
 
@@ -42,3 +37,8 @@ def page_not_found(e):
 
 def profile():
       return render_template('profile.html')
+
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
