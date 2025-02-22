@@ -7,8 +7,14 @@
         margin: 0;
         padding: 0;
         font-family: 'Poppins', sans-serif;
-        background: linear-gradient(135deg, #9F84B7, #EDEDF9);
-        color: #333;
+        background-color: #000;
+        color: #fff;
+        overflow: hidden; /* Prevents scrolling */
+    }
+
+    /* Hide Scrollbar (Works on WebKit browsers like Chrome, Safari) */
+    ::-webkit-scrollbar {
+        display: none;
     }
 
     /* Header Section */
@@ -21,7 +27,7 @@
         font-size: 50px;
         font-weight: 600;
         margin: 0;
-        color: #fff;
+        color: #ff9800;
     }
 
     .header p {
@@ -36,8 +42,8 @@
         display: inline-block;
         margin-top: 20px;
         padding: 15px 30px;
-        background-color: #fff;
-        color: #9F84B7;
+        background-color: #ff9800;
+        color: #000;
         text-decoration: none;
         font-size: 18px;
         font-weight: 600;
@@ -46,8 +52,8 @@
     }
 
     .btn:hover {
-        background-color: #9F84B7;
-        color: #fff;
+        background-color: #fff;
+        color: #ff9800;
     }
 
     /* Features Section */
@@ -59,9 +65,9 @@
     }
 
     .feature-box {
-        background-color: #fff;
+        background-color: #1a1a1a;
         border-radius: 12px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 8px rgba(255, 152, 0, 0.3);
         margin: 20px;
         padding: 20px;
         text-align: center;
@@ -71,25 +77,17 @@
     .feature-box img {
         width: 80px;
         margin-bottom: 20px;
+        filter: brightness(0) invert(1);
     }
 
     .feature-box h3 {
         font-size: 22px;
-        color: #9F84B7;
+        color: #ff9800;
     }
 
     .feature-box p {
         font-size: 16px;
-        color: #666;
-    }
-
-    /* Footer Section */
-    .footer {
-        text-align: center;
-        padding: 20px;
-        background-color: #9F84B7;
-        color: #fff;
-        margin-top: 30px;
+        color: #ccc;
     }
 </style>
 
@@ -122,8 +120,4 @@
     </div>
 </div>
 
-<!-- Footer -->
-<div class="footer">
-    <p>&copy; 2025 Captionify. All Rights Reserved.</p>
-</div>
 {% endblock content %}
