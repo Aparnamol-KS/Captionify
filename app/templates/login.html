@@ -3,46 +3,30 @@
 {% block style %}
 <style>
   /* General Reset */
-  .right-section {
-    background-image: url('/static/login_image.jpg');
-    background-size: cover;
-  }
-
-  .main {
-    height: 100vh;
-  }
-
   body {
     margin: 0;
     padding: 0;
     font-family: 'Times New Roman', Times, serif;
-    font-size: 30px;
-    overflow: hidden;
-    background-color: #EDEDF9;
     font-size: 25px;
-  }
-
-  .roboto-condensed-font {
-    font-family: "Roboto Condensed", serif;
-    font-optical-sizing: auto;
-    font-weight: 300;
-    font-style: normal;
+    background-color: #EDEDF9;
+    overflow: hidden; /* Hide scrollbars */
   }
 
   /* Page Layout */
-  .container {
+  .main {
     display: flex;
     height: 100vh;
   }
 
-  /* Left Section for Registration */
+  /* Left Section for Login */
   .left-section {
     flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 150px;
+    padding: 100px;
+    background-color: #EDEDF9;
   }
 
   form {
@@ -50,7 +34,7 @@
     max-width: 400px;
   }
 
-  /* Form group styling */
+  /* Form Styling */
   .form-group {
     margin-bottom: 15px;
   }
@@ -62,7 +46,6 @@
     color: #333333;
   }
 
-  input[type="text"],
   input[type="email"],
   input[type="password"] {
     width: 100%;
@@ -74,28 +57,12 @@
     transition: border-color 0.2s ease-in-out;
   }
 
-  input[type="text"]:focus,
   input[type="email"]:focus,
   input[type="password"]:focus {
     border-color: #9F84B7;
   }
 
-  /* Small helper text styling */
-  .form-text {
-    font-size: 12px;
-    color: #6c757d;
-  }
-
-  .form-check-input {
-    margin-right: 10px;
-  }
-
-  .form-check-label {
-    font-size: 14px;
-    color: #495057;
-  }
-
-  /* Submit button styling */
+  /* Button Styling */
   button[type="submit"] {
     width: 100%;
     padding: 10px;
@@ -113,8 +80,18 @@
     opacity: 1;
   }
 
-  /* Positioning for "Already have an account?" */
-  .login-link {
+  /* Right Section with Background Image */
+  .right-section {
+    flex: 1;
+    background-image: url('/static/login_image.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    height: 100vh;
+  }
+
+  /* Positioning for "Don't have an account?" */
+  .text-muted {
     display: block;
     text-align: center;
     margin-top: 15px;
@@ -124,15 +101,13 @@
 {% endblock style %}
 
 {% block content %}
-<div class="row col-md-12 main">
-  <div class="col-md-6 col-12 left-section">
+<div class="main">
+  <!-- Left Section -->
+  <div class="left-section">
+    <h2>Login</h2>
     <form method="POST" action="">
       {{ form.hidden_tag() }}
       <fieldset class="form-group">
-        <div class="form-group">
-          {{ form.username.label(class="form-control-label") }}
-          {{ form.username(class="form-control form-control-lg") }}
-        </div>
         <div class="form-group">
           {{ form.email.label(class="form-control-label") }}
           {{ form.email(class="form-control form-control-lg") }}
@@ -141,22 +116,19 @@
           {{ form.password.label(class="form-control-label") }}
           {{ form.password(class="form-control form-control-lg") }}
         </div>
-        <div class="form-group">
-          {{ form.confirm_password.label(class="form-control-label") }}
-          {{ form.confirm_password(class="form-control form-control-lg") }}
-        </div>
       </fieldset>
       <div class="form-group">
         {{ form.submit(class="btn btn-outline-info") }}
       </div>
-
-      <!-- "Already have an account?" message positioned right below the button -->
-      <small class="text-muted login-link">
-        Already have an account? <a href="{{ url_for('login') }}">Log in</a>
-      </small>
     </form>
+
+    <!-- "Don't have an account?" message positioned right below the button -->
+    <small class="text-muted">
+      Don't have an account? <a href="{{ url_for('main.register') }}">Sign up</a>
+    </small>
   </div>
-  
-  <div class="col-md-6 d-none d-xl-block right-section"></div>
+
+  <!-- Right Section (Background Image) -->
+  <div class="right-section"></div>
 </div>
 {% endblock content %}
