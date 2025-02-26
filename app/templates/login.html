@@ -6,129 +6,126 @@
   body {
     margin: 0;
     padding: 0;
-    font-family: 'Times New Roman', Times, serif;
-    font-size: 25px;
-    background-color: #EDEDF9;
-    overflow: hidden; /* Hide scrollbars */
+    font-family: 'class(dm-sans-font)', sans-serif;
+    font-size: 20px;
+    background-color: #000;
+    color: #66FCF1;
   }
 
-  /* Page Layout */
-  .main {
-    display: flex;
-    height: 100vh;
+  /* Centering the form */
+  .container {
+    margin-top: 10%;
   }
 
-  /* Left Section for Login */
-  .left-section {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 100px;
-    background-color: #EDEDF9;
+  .card {
+    background-color: #1a1a1a;
+    box-shadow: 0 4px 10px #66FCF1;
+    border-radius: 10px;
   }
 
-  form {
-    width: 100%;
-    max-width: 400px;
+  .card-body {
+    padding: 30px;
+  }
+
+  h2 {
+    text-align: center;
+    color: #66FCF1;
+    margin-bottom: 20px;
   }
 
   /* Form Styling */
-  .form-group {
-    margin-bottom: 15px;
+  .form-group label {
+    color: #66FCF1;
   }
 
-  label {
-    font-weight: bold;
-    display: block;
-    margin-bottom: 5px;
-    color: #333333;
-  }
-
-  input[type="email"],
-  input[type="password"] {
+  .form-control {
     width: 100%;
-    padding: 10px;
-    font-size: 14px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #66FCF1 !important;
+    border-radius: 5px;
+    background-color: #000 !important; /* Ensures the input stays black */
+    color: #ffffff !important; /* Ensures text inside is white */
     outline: none;
     transition: border-color 0.2s ease-in-out;
+    appearance: none; /* Prevents browser-specific styles */
   }
 
-  input[type="email"]:focus,
-  input[type="password"]:focus {
-    border-color: #9F84B7;
+  .form-control::placeholder {
+    color: #66FCF1 !important; /* Placeholder text in teal */
+    opacity: 0.7;
+  }
+
+  .form-control:focus {
+    border-color: #ffffff !important;
+    background-color: #000 !important;
+    color: #ffffff !important;
   }
 
   /* Button Styling */
-  button[type="submit"] {
+  .btn-custom {
     width: 100%;
-    padding: 10px;
+    padding: 12px;
     font-size: 16px;
-    color: #ffffff;
-    background-color: #9F84B7;
+    font-weight: bold;
+    color: #000;
+    background-color: #66FCF1;
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    opacity: 0.6;
     transition: 0.3s;
   }
 
-  button:hover {
-    opacity: 1;
+  .btn-custom:hover {
+    background-color: #ffffff;
+    color: #000;
   }
 
-  /* Right Section with Background Image */
-  .right-section {
-    flex: 1;
-    background-image: url('/static/login_image.jpg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    height: 100vh;
-  }
-
-  /* Positioning for "Don't have an account?" */
+  /* Register link */
   .text-muted {
-    display: block;
     text-align: center;
     margin-top: 15px;
     font-size: 16px;
+  }
+
+  .text-muted a {
+    color: #ffffff;
+    font-weight: bold;
+    text-decoration: none;
+  }
+
+  .text-muted a:hover {
+    color: #66FCF1;
+    text-decoration: underline;
   }
 </style>
 {% endblock style %}
 
 {% block content %}
-<div class="main">
-  <!-- Left Section -->
-  <div class="left-section">
-    <h2>Login</h2>
-    <form method="POST" action="">
-      {{ form.hidden_tag() }}
-      <fieldset class="form-group">
-        <div class="form-group">
-          {{ form.email.label(class="form-control-label") }}
-          {{ form.email(class="form-control form-control-lg") }}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h2>Login</h2>
+          <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+              {{ form.email.label(class="form-control-label") }}
+              {{ form.email(class="form-control") }}
+            </div>
+            <div class="form-group">
+              {{ form.password.label(class="form-control-label") }}
+              {{ form.password(class="form-control") }}
+            </div>
+            <button type="submit" class="btn btn-custom">Login</button>
+          </form>
+          <p class="text-muted mt-3">
+            Don't have an account? <a href="{{ url_for('main.register') }}">Sign up</a>
+          </p>
         </div>
-        <div class="form-group">
-          {{ form.password.label(class="form-control-label") }}
-          {{ form.password(class="form-control form-control-lg") }}
-        </div>
-      </fieldset>
-      <div class="form-group">
-        {{ form.submit(class="btn btn-outline-info") }}
       </div>
-    </form>
-
-    <!-- "Don't have an account?" message positioned right below the button -->
-    <small class="text-muted">
-      Don't have an account? <a href="{{ url_for('main.register') }}">Sign up</a>
-    </small>
+    </div>
   </div>
-
-  <!-- Right Section (Background Image) -->
-  <div class="right-section"></div>
 </div>
 {% endblock content %}

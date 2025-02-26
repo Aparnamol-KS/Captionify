@@ -3,8 +3,8 @@
 {% block style %}
 <style>
     body {
-        background-color: #ffffff;
-        font-family: 'Roboto Condensed', sans-serif;
+        background-color: #000000;
+        font-family: 'class(dm-sans-font)', sans-serif;
         font-size: 25px;
         margin: 0;
         height: 100vh;
@@ -22,10 +22,10 @@
     }
 
     .big-box {
-        background-color: hsl(0, 0%, 100%);
+        background-color: #1a1a1a;
         width: 30%;
         height: 300px;
-        box-shadow: 0 4px 10px rgba(130, 62, 157, 0.3);
+        box-shadow: 0 4px 10px #66FCF1;
         border-radius: 10px;
         text-align: center;
         display: flex;
@@ -38,32 +38,22 @@
     }
 
     .big-box:hover {
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 6px 15px #66FCF1;
         transform: translateY(-5px);
     }
 
     .big-box.active {
-        box-shadow: 0 0 25px 1px #7f7d7d;
+        box-shadow: 0 0 25px 1px#0066ff;
     }
 
-    .fa-microphone {
-        font-size: 150px;
-        color: #2175ba;
-    }
-
-    .fa-file-pdf {
-        font-size: 150px;
-        color: rgb(180, 58, 58);
-    }
-
-    .fa-book {
-        font-size: 150px;
-        color: #3796a4;
+    .fa-microphone, .fa-file-pdf, .fa-book {
+        font-size: 100px; /* Reduced from 150px */
+        color: white;
     }
 
     h1 {
         margin-top: 10px;
-        color: black;
+        color: #66FCF1;
     }
 </style>
 {% endblock style %}
@@ -71,27 +61,21 @@
 {% block content %}
 <div class="container">
     <!-- First box -->
-
-
     <div class="big-box" onclick="toggleHighlight(this)">
         <i class="fa-solid fa-microphone"></i>
         <h1>Live Caption</h1>
-
     </div>
 
     <!-- Second box -->
-
     <div class="big-box" onclick="toggleHighlight(this)">
         <i class="fa-solid fa-file-pdf"></i>
         <h1>PDF</h1>
-
     </div>
 
     <!-- Third box -->
-    <div class="big-box " onclick="toggleHighlight(this)">
+    <div class="big-box" onclick="toggleHighlight(this)">
         <i class="fa-solid fa-book"></i>
         <h1>Summarize</h1>
     </div>
-
 </div>
 {% endblock content %}

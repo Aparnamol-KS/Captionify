@@ -3,160 +3,137 @@
 {% block style %}
 <style>
   /* General Reset */
-  .right-section {
-    background-image: url('/static/login_image.jpg');
-    background-size: cover;
-  }
-
-  .main {
-    height: 100vh;
-  }
-
   body {
     margin: 0;
     padding: 0;
-    font-family: 'Times New Roman', Times, serif;
-    font-size: 30px;
-    overflow: hidden;
-    background-color: #EDEDF9;
-    font-size: 25px;
+    font-family: 'class(dm-sans-font)', sans-serif;
+    font-size: 20px;
+    background-color: #000;
+    color: #66FCF1;
   }
 
-  .roboto-condensed-font {
-    font-family: "Roboto Condensed", serif;
-    font-optical-sizing: auto;
-    font-weight: 300;
-    font-style: normal;
-  }
-
-  /* Page Layout */
+  /* Centering the form */
   .container {
-    display: flex;
-    height: 100vh;
+    margin-top: 5%;
   }
 
-  /* Left Section for Registration */
-  .left-section {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 150px;
+  .card {
+    background-color: #1a1a1a;
+    box-shadow: 0 4px 10px #66FCF1;
+    border-radius: 10px;
   }
 
-  form {
+  .card-body {
+    padding: 30px;
+  }
+
+  h2 {
+    text-align: center;
+    color: #66FCF1;
+    margin-bottom: 20px;
+  }
+
+  /* Form Styling */
+  .form-group label {
+    color: #66FCF1;
+  }
+
+  .form-control {
     width: 100%;
-    max-width: 400px;
-  }
-
-  /* Form group styling */
-  .form-group {
-    margin-bottom: 15px;
-  }
-
-  label {
-    font-weight: bold;
-    display: block;
-    margin-bottom: 5px;
-    color: #333333;
-  }
-
-  input[type="text"],
-  input[type="email"],
-  input[type="password"] {
-    width: 100%;
-    padding: 10px;
-    font-size: 14px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #66FCF1 !important;
+    border-radius: 5px;
+    background-color: #000 !important; /* Keeps input black */
+    color: #ffffff !important; /* Keeps text white */
     outline: none;
     transition: border-color 0.2s ease-in-out;
+    appearance: none;
   }
 
-  input[type="text"]:focus,
-  input[type="email"]:focus,
-  input[type="password"]:focus {
-    border-color: #9F84B7;
+  .form-control::placeholder {
+    color: #66FCF1 !important;
+    opacity: 0.7;
   }
 
-  /* Small helper text styling */
-  .form-text {
-    font-size: 12px;
-    color: #6c757d;
+  .form-control:focus {
+    border-color: #ffffff !important;
+    background-color: #000 !important;
+    color: #ffffff !important;
   }
 
-  .form-check-input {
-    margin-right: 10px;
-  }
-
-  .form-check-label {
-    font-size: 14px;
-    color: #495057;
-  }
-
-  /* Submit button styling */
-  button[type="submit"] {
+  /* Button Styling */
+  .btn-custom {
     width: 100%;
-    padding: 10px;
+    padding: 12px;
     font-size: 16px;
-    color: #ffffff;
-    background-color: #9F84B7;
+    font-weight: bold;
+    color: #000;
+    background-color: #66FCF1;
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    opacity: 0.6;
     transition: 0.3s;
   }
 
-  button:hover {
-    opacity: 1;
+  .btn-custom:hover {
+    background-color: #ffffff;
+    color: #000;
   }
 
-  /* Positioning for "Already have an account?" */
-  .login-link {
-    display: block;
+  /* Register link */
+  .text-muted {
     text-align: center;
     margin-top: 15px;
     font-size: 16px;
+  }
+
+  .text-muted a {
+    color: #ffffff;
+    font-weight: bold;
+    text-decoration: none;
+  }
+
+  .text-muted a:hover {
+    color: #66FCF1;
+    text-decoration: underline;
   }
 </style>
 {% endblock style %}
 
 {% block content %}
-<div class="row col-md-12 main">
-  <div class="col-md-6 col-12 left-section">
-    <form method="POST" action="">
-      {{ form.hidden_tag() }}
-      <fieldset class="form-group">
-        <div class="form-group">
-          {{ form.username.label(class="form-control-label") }}
-          {{ form.username(class="form-control form-control-lg") }}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h2>Register</h2>
+          <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+              {{ form.username.label(class="form-control-label") }}
+              {{ form.username(class="form-control") }}
+            </div>
+            <div class="form-group">
+              {{ form.email.label(class="form-control-label") }}
+              {{ form.email(class="form-control") }}
+            </div>
+            <div class="form-group">
+              {{ form.password.label(class="form-control-label") }}
+              {{ form.password(class="form-control") }}
+            </div>
+            <div class="form-group">
+              {{ form.confirm_password.label(class="form-control-label") }}
+              {{ form.confirm_password(class="form-control") }}
+            </div>
+            <button type="submit" class="btn btn-custom">Sign Up</button>
+          </form>
+          <p class="text-muted mt-3">
+            Already have an account? <a href="{{ url_for('main.login') }}">Log in</a>
+          </p>
         </div>
-        <div class="form-group">
-          {{ form.email.label(class="form-control-label") }}
-          {{ form.email(class="form-control form-control-lg") }}
-        </div>
-        <div class="form-group">
-          {{ form.password.label(class="form-control-label") }}
-          {{ form.password(class="form-control form-control-lg") }}
-        </div>
-        <div class="form-group">
-          {{ form.confirm_password.label(class="form-control-label") }}
-          {{ form.confirm_password(class="form-control form-control-lg") }}
-        </div>
-      </fieldset>
-      <div class="form-group">
-        {{ form.submit(class="btn btn-outline-info") }}
       </div>
-
-      <!-- "Already have an account?" message positioned right below the button -->
-      <small class="text-muted login-link">
-        Already have an account? <a href="{{ url_for('main.login') }}">Log in</a>
-      </small>
-    </form>
+    </div>
   </div>
-  
-  <div class="col-md-6 d-none d-xl-block right-section"></div>
 </div>
 {% endblock content %}

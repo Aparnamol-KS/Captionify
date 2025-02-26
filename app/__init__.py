@@ -4,6 +4,13 @@ from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
 from config import Config  # Ensure you have a Config class in config.py
 
+import os
+
+class Config:
+    SECRET_KEY = os.getenv("SECRET_KEY", "gh543548fyt6hjg98uh")  
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///site.db'
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+
 # Initialize extensions
 db = SQLAlchemy()
 bcrypt = Bcrypt()

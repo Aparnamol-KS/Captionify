@@ -5,9 +5,13 @@ from app import db
 from flask_bcrypt import Bcrypt
 from flask_login import login_user, logout_user, login_required
 
+from flask import render_template
+from flask_login import login_required, current_user
+
 bcrypt = Bcrypt()  # Initialize bcrypt for password hashing
 
 main = Blueprint('main', __name__)  # Define a Blueprint
+
 
 # Home page
 @main.route('/')
@@ -36,10 +40,17 @@ def login():
         if user and bcrypt.check_password_hash(user.password, form.password.data):
             login_user(user)
             flash('Login successful!', 'success')
-            return redirect(url_for('main.profile'))
+            return redirect(url_for('main.index'))
         else:
             flash('Login failed. Check your email and password.', 'danger')
     return render_template("login.html", title='Login', form=form)
+
+
+@main.route('/profile')
+@login_required
+def profile():
+    return render_template("profile.html", user=current_user)  
+
 
 # Logout route
 @main.route('/logout')
@@ -47,12 +58,6 @@ def logout():
     logout_user()
     flash('You have been logged out.', 'info')
     return redirect(url_for('main.home'))
-
-# Profile page (Requires Login)
-@main.route('/profile')
-@login_required
-def profile():
-    return render_template("profile.html")
 
 # Index page
 @main.route('/index')
