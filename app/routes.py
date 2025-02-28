@@ -1,16 +1,13 @@
-from flask import Blueprint, render_template, flash, redirect, url_for, request
+from flask import Blueprint, render_template, flash, redirect, url_for, send_from_directory, request
 from app.forms import RegistrationForm, LoginForm
-from app.models import User
-from app import db
-from flask_bcrypt import Bcrypt
-from flask_login import login_user, logout_user, login_required
+from app.models import PDFUpload, User, Caption, Summary
+from app import db, bcrypt
+from flask_login import login_user, logout_user, login_required, current_user
+from flask_admin import Admin
+from flask_admin.contrib.sqla import ModelView
+import os
 
-from flask import render_template
-from flask_login import login_required, current_user
-
-bcrypt = Bcrypt()  # Initialize bcrypt for password hashing
-
-main = Blueprint('main', __name__)  # Define a Blueprint
+main = Blueprint('main', __name__)  # Define Blueprint
 
 
 # Home page
@@ -24,11 +21,17 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        new_user = User(username=form.username.data, email=form.email.data, password=hashed_password)
+        
+        # If email is admin@example.com, mark as admin (You can modify this logic)
+        is_admin = True if form.email.data == "admin@example.com" else False
+
+        new_user = User(username=form.username.data, email=form.email.data, password=hashed_password, is_admin=is_admin)
         db.session.add(new_user)
         db.session.commit()
+
         flash('Account created successfully!', 'success')
         return redirect(url_for('main.login'))  # Redirect to login page after registration
+    
     return render_template("register.html", title='Register', form=form)
 
 # Login page
@@ -51,7 +54,6 @@ def login():
 def profile():
     return render_template("profile.html", user=current_user)  
 
-
 # Logout route
 @main.route('/logout')
 def logout():
@@ -64,11 +66,32 @@ def logout():
 def index():
     return render_template("index.html")
 
+@main.route('/pdfs')
+@login_required
+def pdfs():
+    pdf_files = PDFUpload.query.filter_by(user_id=current_user.id).all()  
+    return render_template("pdfs.html", pdfs=pdf_files)
+
+@main.route('/view_pdf/<int:pdf_id>')
+@login_required
+def view_pdf(pdf_id):
+    pdf = PDFUpload.query.get_or_404(pdf_id)
+    pdf_path = os.path.join('uploads', pdf.filename)  
+    return send_from_directory(directory="uploads", filename=pdf.filename)  
+
 # Error Handlers
-@main.errorhandler(404)
+@main.app_errorhandler(404)  
 def page_not_found(e):
     return render_template("404.html"), 404
 
-@main.errorhandler(500)
+@main.app_errorhandler(500)  
 def internal_server_error(e):
     return render_template("500.html"), 500
+
+# Restrict admin access only to admins
+class AdminModelView(ModelView):
+    def is_accessible(self):
+        return current_user.is_authenticated and getattr(current_user, 'is_admin', False)  # ✅ Safe check
+
+    def inaccessible_callback(self, name, **kwargs):
+        return redirect(url_for('main.login'))  # Redirect to login if not admin
