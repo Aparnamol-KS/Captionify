@@ -1,11 +1,10 @@
 {% extends "base.html" %}
-
+{% include 'navbar.html' %}
 {% block style %}
 <style>
     body {
         background-color: #000000;
-        font-family: 'class(dm-sans-font)', sans-serif;
-        font-size: 25px;
+        font-family:'Merriweather', serif;
         margin: 0;
         height: 100vh;
         display: flex;
@@ -32,7 +31,7 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        margin: 15px;
+        margin: 19px;
         transition: box-shadow 0.3s, transform 0.3s;
         cursor: pointer;
     }
@@ -52,8 +51,9 @@
     }
 
     h1 {
-        margin-top: 10px;
+        margin: 30px;
         color: #66FCF1;
+        font-size:2rem;
     }
 </style>
 {% endblock style %}

@@ -20,20 +20,20 @@ def home():
 @main.route('/registration', methods=['GET', 'POST'])
 def register():
     form = RegistrationForm()
+    
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        
-        # If email is admin@example.com, mark as admin (You can modify this logic)
-        is_admin = True if form.email.data == "admin@example.com" else False
+        is_admin = True if form.username.data == "Aparna" else False
 
         new_user = User(username=form.username.data, email=form.email.data, password=hashed_password, is_admin=is_admin)
         db.session.add(new_user)
         db.session.commit()
-
+        
         flash('Account created successfully!', 'success')
-        return redirect(url_for('main.login'))  # Redirect to login page after registration
+        return redirect(url_for('main.login'))  
     
     return render_template("register.html", title='Register', form=form)
+
 
 # Login page
 @main.route('/login', methods=['GET', 'POST'])
@@ -44,16 +44,31 @@ def login():
         if user and bcrypt.check_password_hash(user.password, form.password.data):
             login_user(user)
             flash('Login successful!', 'success')
-            return redirect(url_for('main.index'))
+            return redirect(url_for('main.home'))
         else:
             flash('Login failed. Check your email and password.', 'danger')
     return render_template("login.html", title='Login', form=form)
 
 
-@main.route('/profile')
+@main.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    return render_template("profile.html", user=current_user)  
+    if request.method == 'POST':
+        # Get form data
+        name = request.form.get('name')
+        email = request.form.get('email')
+       
+       # Update current user's details instead of creating a new user
+        current_user.username = name
+        current_user.email = email
+
+        # Commit changes to the database
+        db.session.commit()
+
+        flash('Profile updated successfully!', 'success')
+        return redirect(url_for('main.profile'))  # Reload the profile page
+
+    return render_template("profile.html", user=current_user) 
 
 # Logout route
 @main.route('/logout')
