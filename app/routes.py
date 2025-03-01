@@ -6,6 +6,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 import os
+from app.utils import save_pdf_to_db
 
 main = Blueprint('main', __name__)  # Define Blueprint
 
@@ -78,6 +79,17 @@ def view_pdf(pdf_id):
     pdf = PDFUpload.query.get_or_404(pdf_id)
     pdf_path = os.path.join('uploads', pdf.filename)  
     return send_from_directory(directory="uploads", filename=pdf.filename)  
+
+@main.route('/save_transcription', methods=['POST'])
+@login_required
+def save_transcription():
+    transcription_text = request.form.get("transcription_text")  # Get text from form
+    if not transcription_text:
+        return "No transcription text provided!", 400
+
+    pdf_id = save_pdf_to_db(transcription_text)
+    return redirect(url_for("dashboard"))  # Redirect after saving
+
 
 # Error Handlers
 @main.app_errorhandler(404)  

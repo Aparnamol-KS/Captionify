@@ -33,11 +33,13 @@ class Caption(db.Model):
 class PDFUpload(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(100), nullable=False)
+    pdf_data = db.Column(db.LargeBinary, nullable=False)  # Store PDF as binary data
     upload_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def __repr__(self):
         return f"PDFUpload('{self.filename}')"
+
 
 class Summary(db.Model):
     id = db.Column(db.Integer, primary_key=True)
