@@ -77,7 +77,7 @@
 <div class="container">
     {% if pdfs %}
         {% for pdf in pdfs %}
-        <a href="{{ url_for('transcription.pdf', pdf_id=pdf.id) }}" class="pdf-box">
+        <<a href="{{ url_for('main.view_pdf', pdf_id=pdf.id) }}" class="pdf-box">
             <i class="fa-solid fa-file-pdf"></i>
             <h2>{{ pdf.filename }}</h2>
         </a>

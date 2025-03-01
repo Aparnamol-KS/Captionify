@@ -1,6 +1,7 @@
 from fpdf import FPDF
 import os
 from datetime import datetime
+from flask import current_app
 
 class StylishPDF(FPDF):
     def header(self):
@@ -53,11 +54,15 @@ def generate_pdf(transcription_text, filename="transcription.pdf"):
     # Justified text
     pdf.multi_cell(0, 8, transcription_text, align="J")
     
-    pdf_path = os.path.join(os.getcwd(), filename)
-    pdf.output(pdf_path, "F")
+    # Save PDF in the uploads folder
+    UPLOAD_FOLDER = os.path.join(current_app.root_path, 'uploads')
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Ensure the directory exists
+    
+    pdf_path = os.path.join(UPLOAD_FOLDER, filename)  # Use filename correctly
+    pdf.output(pdf_path, "F")  # Save PDF correctly
     
     print(f"📄 PDF saved as: {pdf_path}")
-    return pdf_path
+    return pdf_path  # Return the path of the saved PDF
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, flash, redirect, url_for, send_from_directory, request
+from flask import Blueprint, render_template, flash, redirect, current_app, url_for, send_from_directory, request
 from app.forms import RegistrationForm, LoginForm
 from app.models import PDFUpload, User, Caption, Summary
 from app import db, bcrypt
@@ -6,7 +6,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 import os
-from app.utils import save_pdf_to_db
+from app.utils import save_pdf_to_db, generate_pdf
 
 main = Blueprint('main', __name__)  # Define Blueprint
 
@@ -73,12 +73,24 @@ def pdfs():
     pdf_files = PDFUpload.query.filter_by(user_id=current_user.id).all()  
     return render_template("pdfs.html", pdfs=pdf_files)
 
+
 @main.route('/view_pdf/<int:pdf_id>')
 @login_required
 def view_pdf(pdf_id):
-    pdf = PDFUpload.query.get_or_404(pdf_id)
-    pdf_path = os.path.join('uploads', pdf.filename)  
-    return send_from_directory(directory="uploads", filename=pdf.filename)  
+    pdf = PDFUpload.query.get_or_404(pdf_id)  # Fetch the PDF from the database
+    
+    # Ensure the correct directory where PDFs are stored
+    pdf_directory = os.path.join(current_app.root_path, 'uploads')  
+    
+    # Check if file exists
+    if not os.path.exists(os.path.join(pdf_directory, pdf.filename)):
+        return "File not found", 404
+    
+    # Serve the PDF file
+    return send_from_directory(pdf_directory, pdf.filename)
+
+
+ 
 
 @main.route('/save_transcription', methods=['POST'])
 @login_required
@@ -86,7 +98,6 @@ def save_transcription():
     transcription_text = request.form.get("transcription_text")  # Get text from form
     if not transcription_text:
         return "No transcription text provided!", 400
-
     pdf_id = save_pdf_to_db(transcription_text)
     return redirect(url_for("dashboard"))  # Redirect after saving
 
