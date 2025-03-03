@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% include 'navbar.html' %}
+
+{% block style %}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Merriweather', serif;
+    }
+    .alert-container {
+        position: fixed;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1050;
+        /* Ensure it's above all other elements */
+        width: 100%;
+    }
+    body {
+        background-color: #0B0C10;
+    }
+
+    h1 {
+        margin-top: 70px;
+        font-size: 3rem;
+        color: #66fcf1;
+        text-align: center;
+        font-family: fantasy;
+        color: #66FCF1;
+        font-weight: lighter;
+    }
+
+    .summary-box {
+        background-color: #1a1c22;
+        padding: 20px;
+        font-size: 1.2rem;
+        overflow-y: auto;
+        box-shadow: 0px 4px 8px rgba(53, 44, 44, 0.664);
+        border-radius: 10px;
+        color: #ebe9e1;
+        height: 65vh;
+    }
+
+    .button-container {
+        margin-top: 30px;
+    }
+
+    .button {
+        background-color: #0B0C10;
+        border: 2px solid #66FCF1;
+        color: white;
+        padding: 15px;
+        font-size: 16px;
+        text-align: center;
+        cursor: pointer;
+        border-radius: 8px;
+        margin: 0 10px;
+        box-shadow: 0px 4px 6px rgba(232, 228, 228, 0.689);
+        transition: all 0.5s ease;
+        width: 100%;
+        display: block;
+        /* Makes <a> inside buttons look the same */
+        text-decoration: none;
+        /* Removes underline from links */
+    }
+
+    .button:hover {
+        transform: scale(1.05);
+        color:white;
+        text-decoration: none;
+    }
+
+    .button a {
+        color: white;
+        /* Ensures the link inside the button looks like normal text */
+        text-decoration: none;
+        display: block;
+        /* Makes the entire button clickable */
+        width: 100%;
+        height: 100%;
+    }
+</style>
+{% endblock style %}
+
+{% block content %}
+<div class="alert-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+</div>
+<div class="header">
+    <h1>SUMMARY</h1>
+</div>
+
+<!-- Summary Box -->
+<div class="container mt-4">
+    <div class="row justify-content-center ">
+        <div class="col-md-12">
+            <div class="summary-box" id="summary-text" contenteditable="false">
+                {{summary}}
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Buttons -->
+    <div class="row justify-content-center button-container text-center">
+        <!-- Back to Transcription -->
+        <div class="col-md-3 col-6 mb-2">
+            <a href="{{url_for('main.live_transcription')}}" class="button w-100">Back to Transcription</a>
+        </div>
+
+        <!-- Save as PDF -->
+        <div class="col-md-3 col-6 mb-2">
+            <form action="{{ url_for('main.save_summary_pdf') }}" method="post" onsubmit="prepareTranscription()" class="w-100">
+                <input type="hidden" id="summary_hidden_text" name="summary_text">
+                <button type="submit" class="button w-100">Save as PDF</button>
+            </form>
+        </div>
+
+        <!-- Edit -->
+        <div class="col-md-3 col-6 mb-2">
+            <button id="edit-btn" class="button w-100">Edit</button>
+        </div>
+    </div>
+
+
+</div>
+
+<script>
+    function prepareTranscription() {
+        // Get the transcription text from the contenteditable div
+        document.getElementById("summary_hidden_text").value =
+            document.getElementById("summary-text").innerText.trim();
+    }
+
+    document.getElementById("edit-btn").addEventListener("click", function () {
+        let transcriptionBox = document.getElementById("summary-text");
+
+        if (transcriptionBox.contentEditable === "true") {
+            transcriptionBox.contentEditable = "false";
+            this.innerText = "Edit"; // Change button text back to 'Edit'
+        } else {
+            transcriptionBox.contentEditable = "true";
+            this.innerText = "Save"; // Change button text to 'Save'
+        }
+    });
+    setTimeout(function () {
+        let alerts = document.querySelectorAll(".alert");
+        alerts.forEach(alert => {
+            let bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+</script>
+{% endblock content %}

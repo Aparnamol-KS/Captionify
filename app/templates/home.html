@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% include 'navbar.html' %}
 {% block style %}
 <style>
     .dm-sans-font {
@@ -9,7 +9,14 @@
         font-style: normal;
 
     }
-
+    .alert-container {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1050; /* Ensure it's above all other elements */
+            width: 100%;
+        }
 
     .merriweather-light {
         font-family: "Merriweather", serif;
@@ -66,7 +73,7 @@
     }
 
     .header h1 {
-        margin-top: 20px;
+        margin-top: 50px;
         font-size: 5rem;
         text-align: center;
         font-family: fantasy;
@@ -152,6 +159,17 @@
 
 
 {% block content %}
+<div class="alert-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
 <!-- Header -->
 <div class="header">
     <h1 >Welcome to Captionify</h1>
@@ -175,7 +193,7 @@
 
         <div class="row mt-5 justify-content-center mb-2">
             <div class="col-md-4 col-10 p-3">
-                <a class="boxes" href="{{ url_for('main.pdfs') }}">
+                <a class="boxes" href="{{url_for('main.live_transcription')}}">
                     <div class="feature-box">
                         <i class="fa-solid fa-microphone micro-icon"></i>
                         <h2>Live Caption Now</h3>
@@ -193,7 +211,7 @@
                 </a>
             </div>
             <div class="col-md-4 col-10 p-3  ">
-                <a class="boxes" href="{{ url_for('main.pdfs') }}">
+                <a class="boxes" href="{{ url_for('main.summary_list') }}">
                     <div class="feature-box">
                         <i class="fa-solid fa-book micro-icon"></i>
                         <h2> View Summaries</h2>
@@ -283,4 +301,15 @@
         </div>
     </div>
 </footer>
+
+<script>
+    // Automatically hide alert after 5 seconds (5000ms)
+    setTimeout(function () {
+        let alerts = document.querySelectorAll(".alert");
+        alerts.forEach(alert => {
+            let bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+</script>
 {% endblock content %}
