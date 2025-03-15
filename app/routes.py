@@ -3,9 +3,6 @@ from app.forms import RegistrationForm, LoginForm
 from app.models import PDFUpload, User, Caption, Summary
 from app import db, bcrypt
 from flask_login import login_user, logout_user, login_required, current_user
-from flask_admin import Admin
-from flask_admin.contrib.sqla import ModelView
-# from app.utils import save_pdf_to_db, generate_pdf
 from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO
 from app.utiles.transcriber import SpeechTranscriber
@@ -40,10 +37,8 @@ def home():
 def start_recording():
     if transcriber:
         transcriber.start_recording()
-        flash("Recording started!", "success")
         return jsonify({"status": "Recording started"})
     else:
-        flash("Error: Transcriber not initialized!", "danger")
         return jsonify({"status": "Error", "message": "Transcriber not initialized"}), 500
     
 
@@ -58,14 +53,21 @@ def stop_recording():
             flash("No transcription recorded!", "warning")
             return jsonify({"status": "No transcription recorded."})
 
-        # Check if a transcription already exists for this user (latest entry)
-        existing_caption = Caption.query.filter_by(user_id=current_user.id).order_by(Caption.timestamp.desc()).first()
+        # Fetch all captions for the user
+        user_captions = Caption.query.filter_by(user_id=current_user.id).all()
+
+        # Find a caption with similar text (similarity > 90%)
+        existing_caption = None
+        for caption in user_captions:
+            if text_similarity(full_text, caption.text) > 0.9:
+                existing_caption = caption
+                break
 
         if existing_caption:
             # Update the existing transcription
             existing_caption.text = full_text
             existing_caption.timestamp = datetime.utcnow()  # Update timestamp
-            flash("Transcription updated successfully!", "success")
+            
         else:
             # Create a new transcription entry
             new_caption = Caption(
@@ -74,15 +76,22 @@ def stop_recording():
                 timestamp=datetime.utcnow()
             )
             db.session.add(new_caption)
-            flash("New transcription saved!", "success")
 
         db.session.commit()  # Commit changes to database
 
-        return jsonify({"status": "Recording stopped", "message": "Transcription saved!", "transcription": full_text})
+        return jsonify({
+            "status": "Recording stopped",
+            "message": "Transcription saved!",
+            "transcription": full_text
+        })
 
     else:
         flash("Error: Transcriber not initialized!", "danger")
-        return jsonify({"status": "Error", "message": "Transcriber not initialized"}), 500
+        return jsonify({
+            "status": "Error",
+            "message": "Transcriber not initialized"
+        }), 500
+
 
 
 @main.route('/edit_caption/<int:caption_id>', methods=['POST'])
@@ -152,7 +161,8 @@ def save_pdf():
         return redirect(url_for("main.live_transcription"))  # Redirect back with error
 
     # Generate the PDF using existing function
-    pdf_filename = f"{current_user.username}_transcription.pdf"
+    timestamp = datetime.now().strftime("%Y%m%d")
+    pdf_filename = f"{timestamp}_transcription.pdf"
 
     pdf_path = generate_pdf(transcription_text, pdf_filename)  # Call your existing function
 
@@ -193,7 +203,8 @@ def save_summary_pdf():
         return redirect(url_for("main.summary"))  # Redirect back with error
 
     # Generate a filename that indicates it's a summary
-    pdf_filename = f"{current_user.username}_summary.pdf"
+    timestamp = datetime.now().strftime("%Y%m%d")
+    pdf_filename = f"{timestamp}_summary.pdf"
 
     # Generate PDF using the existing function
     pdf_path = generate_pdf(summary_text, pdf_filename)
@@ -357,10 +368,14 @@ def pdfs():
 @login_required
 def summary_list():
     summaries = db.session.query(Summary, Caption.timestamp).join(Caption).filter(Caption.user_id == current_user.id).order_by(Summary.id.desc()).all()
-
-
-
     return render_template("summary_list.html", summaries=summaries)
+
+@main.route('/summary_list/<int:summary_id>')
+def view_summary(summary_id):
+    summary = Summary.query.get_or_404(summary_id)
+    caption = Caption.query.get_or_404(summary.caption_id)  # Get corresponding caption
+    return render_template('summary_detail.html', summary=summary, caption=caption)
+
 
 
 @main.route('/view_pdf/<int:pdf_id>')
@@ -391,10 +406,4 @@ def page_not_found(e):
 def internal_server_error(e):
     return render_template("500.html"), 500
 
-# Restrict admin access only to admins
-class AdminModelView(ModelView):
-    def is_accessible(self):
-        return current_user.is_authenticated and getattr(current_user, 'is_admin', False)  # ✅ Safe check
 
-    def inaccessible_callback(self, name, **kwargs):
-        return redirect(url_for('main.login'))  # Redirect to login if not admin

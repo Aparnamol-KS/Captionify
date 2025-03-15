@@ -24,6 +24,11 @@
                 <li class="nav-item">
                     <a class="nav-link text-accent" href="{{ url_for('main.pdfs') }}">View Pdfs</a>
                 </li>
+                {% if current_user.is_authenticated and current_user.is_admin %}
+                <li class="nav-item">
+                    <a class="nav-link text-accent" href="{{ url_for('admin.index') }}">Admin Panel</a>
+                </li>
+                {% endif %}
                 {% else %}
                 <li class="nav-item ms-3">
                     <a class="nav-link text-accent" href="{{ url_for('main.login') }}">Login</a>

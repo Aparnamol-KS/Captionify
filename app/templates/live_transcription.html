@@ -12,7 +12,7 @@
 
     body {
         background-color: #0B0C10;
-        
+
     }
 
     .header {
@@ -60,12 +60,22 @@
         border-radius: 8px;
         margin: 0 10px;
         box-shadow: 0px 4px 6px rgba(232, 228, 228, 0.689);
-        transition: all 0.5s ease;
+        transition: all 0.3s ease;
         width: 100%;
     }
 
     .button:hover {
         transform: scale(1.05);
+    }
+
+    /* Disabled button style */
+    .button:disabled {
+        background-color: #4A4A4A;
+        border: 2px solid #A9A9A9;
+        color: #B0B0B0;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
     }
 
     .alert-container {
@@ -100,8 +110,8 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12">
-            <div class="transcription-box" id="transcription" contenteditable="false" >
-                
+            <div class="transcription-box" id="transcription" contenteditable="false">
+
             </div>
         </div>
     </div>
@@ -113,12 +123,12 @@
         <div class="row justify-content-center w-100 text-center">
             <!-- Start Recording -->
             <div class="col-md-2 col-6 mb-2">
-                <button class="button w-100" onclick="startRecording()">Start Recording</button>
+                <button class="button w-100" id="start-btn" onclick="startRecording()">Start Recording</button>
             </div>
 
             <!-- Stop Recording -->
             <div class="col-md-2 col-6 mb-2">
-                <button class="button w-100" onclick="stopRecording()">Stop Recording</button>
+                <button class="button w-100" id="stop-btn" onclick="stopRecording()">Stop Recording</button>
             </div>
 
             <!-- Save as PDF -->
@@ -132,7 +142,7 @@
 
             <!-- Summarize -->
             <div class="col-md-2 col-6 mb-2">
-                <form action="/summary" method="post" class="w-100" onsubmit="prepareTranscriptionForSummarize()"   >
+                <form action="/summary" method="post" class="w-100" onsubmit="prepareTranscriptionForSummarize()">
                     <input type="hidden" name="transcript" id="transcript-input">
                     <button type="submit" class="button w-100">Summarize</button>
                 </form>
@@ -161,64 +171,98 @@
         let transcriptionBox = document.getElementById("transcription");
         transcriptionBox.innerText += " " + data;
         transcriptionBox.scrollTop = transcriptionBox.scrollHeight; // Auto-scroll to bottom
+        updateButtonState();
     });
-    // Start recording speech
-    function startRecording() {
-        fetch('/live_transcription/start_recording')
-            .then(response => response.json())
-            .then(data => {
-                console.log("Recording started:", data);
-            })
-            .catch(error => console.error("Error starting recording:", error));
-    }
+    window.onload = function () {
+    updateButtonState();
+};
 
-    // Stop recording and update transcription text
+function startRecording() {
+    fetch('/live_transcription/start_recording')
+        .then(response => response.json())
+        .then(data => {
+            console.log("Recording started:", data);
+            console.log("Recording started:", data);
+            let startBtn = document.getElementById("start-btn");
+            startBtn.disabled = true;
+            startBtn.innerText = "Recording...";
+            startBtn.style.backgroundColor = "red";
+            startBtn.style.color = "white";
+            document.getElementById("stop-btn").disabled = false;
+            document.getElementById("clear-btn").disabled = true;
+            document.getElementById("edit-btn").disabled = true;
+            document.querySelector("form[action='/summary'] button").disabled = true;
+            document.querySelector("form[action='{{ url_for('main.save_pdf') }}'] button").disabled = true;
+        })
+        .catch(error => console.error("Error starting recording:", error));
+}
+
+
     function stopRecording() {
-        fetch('/live_transcription/stop_recording')
-            .then(response => response.json())
-            .then(data => {
-                if (data.transcription) {
-                    document.getElementById("transcription").innerText = data.transcription;
-                } else {
-                    alert("Error: No transcription received.");
-                }
-            })
-            .catch(error => console.error("Error stopping recording:", error));
-    }
+    fetch('/live_transcription/stop_recording')
+        .then(response => response.json())
+        .then(data => {
+            // if (data.transcription) {
+            //     document.getElementById("transcription").innerText = data.transcription;
+            //     updateButtonState();
+            // } else {
+            //     alert("Error: No transcription received.");
+            // }
+            let startBtn = document.getElementById("start-btn");
+            startBtn.disabled = false;
+            startBtn.innerText = "Start Recording";
+            startBtn.style.backgroundColor = "";
+            startBtn.style.color = "";
+            document.getElementById("stop-btn").disabled = true;
+            document.getElementById("clear-btn").disabled = false;
+            document.getElementById("edit-btn").disabled = false;
+            document.querySelector("form[action='/summary'] button").disabled = false;
+            document.querySelector("form[action='{{ url_for('main.save_pdf') }}'] button").disabled = false;
+        })
+        .catch(error => console.error("Error stopping recording:", error));
+}
+
 
     function prepareTranscription() {
-        // Get the transcription text from the contenteditable div
         document.getElementById("transcription_text").value =
             document.getElementById("transcription").innerText.trim();
     }
 
-
     document.getElementById("clear-btn").addEventListener("click", function () {
-        document.getElementById("transcription").innerText = "";  // Clears the div content
+        document.getElementById("transcription").innerText = ""; // Clears the div content
+        updateButtonState();
     });
-
 
     function toggleEdit() {
         let transcriptionBox = document.getElementById("transcription");
         let editButton = document.getElementById("edit-btn");
 
         if (transcriptionBox.contentEditable === "true") {
-            // Save mode - Disable editing, update input, and submit form
             transcriptionBox.contentEditable = "false";
-            editButton.innerText = "Edit";  // Change button back to 'Edit'
+            editButton.innerText = "Edit";
         } else {
-            // Edit mode - Enable editing
             transcriptionBox.contentEditable = "true";
-            transcriptionBox.focus();  // Auto-focus
-            editButton.innerText = "Save";  // Change button to 'Save'
+            transcriptionBox.focus();
+            editButton.innerText = "Save";
         }
     }
-    
+
     function prepareTranscriptionForSummarize() {
-        // Get the transcription text from the contenteditable div
         document.getElementById("transcript-input").value = document.getElementById("transcription").innerText;
     }
-    // Automatically hide alert after 5 seconds (5000ms)
+
+    function updateButtonState() {
+    let transcriptionText = document.getElementById("transcription").innerText.trim();
+    
+    let clearBtn = document.getElementById("clear-btn");
+    let editBtn = document.getElementById("edit-btn");
+
+    clearBtn.disabled = transcriptionText === "";
+    editBtn.disabled = transcriptionText === "";
+}
+
+
+    // Automatically hide alerts after 5 seconds
     setTimeout(function () {
         let alerts = document.querySelectorAll(".alert");
         alerts.forEach(alert => {
@@ -227,4 +271,5 @@
         });
     }, 5000);
 </script>
+
 {% endblock content %}
