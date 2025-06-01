@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block style %}
+<style>
+  /* General Reset */
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Merriweather', serif;
+    font-size: 1rem;
+    background-color: #000;
+    color: #66FCF1;
+  }
+  .alert-container {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1050; /* Ensure it's above all other elements */
+            width: 100%;
+        }
+  /* Centering the form */
+  .container {
+    margin-top: 10%;
+  }
+
+  .card {
+    background-color: #1a1a1a;
+    box-shadow: 0 4px 10px #66FCF1;
+    border-radius: 10px;
+  }
+
+  .card-body {
+    padding: 30px;
+  }
+
+  h1 {
+    text-align: center;
+    color: #66FCF1;
+    font-family: fantasy;
+    font-size:5rem;
+    margin-bottom: 40px;
+    font-weight: lighter;
+  }
+
+  /* Form Styling */
+  .form-group label {
+    color: #66FCF1;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #66FCF1 !important;
+    border-radius: 5px;
+    background-color: #000 !important;
+    /* Ensures the input stays black */
+    color: #ffffff !important;
+    /* Ensures text inside is white */
+    outline: none;
+    transition: border-color 0.2s ease-in-out;
+    appearance: none;
+    /* Prevents browser-specific styles */
+  }
+
+  .form-control::placeholder {
+    color: #66FCF1 !important;
+    /* Placeholder text in teal */
+    opacity: 0.7;
+  }
+
+  .form-control:focus {
+    border-color: #ffffff !important;
+    background-color: #000 !important;
+    color: #ffffff !important;
+  }
+
+  /* Button Styling */
+  .btn-custom {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #000;
+    background-color: #66FCF1;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+    transition: transform 0.3s;
+  }
+
+  .btn-custom:hover {
+    transform: scale(1.01);
+  }
+
+  /* Register link */
+  .text-muted {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 16px;
+  }
+
+  .text-muted a {
+    color: #ffffff;
+    font-weight: bold;
+    text-decoration: none;
+  }
+
+  .text-muted a:hover {
+    color: #66FCF1;
+    text-decoration: underline;
+  }
+</style>
+{% endblock style %}
+
+{% block content %}
+<div class="alert-container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+          {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                  {{ message }}
+              </div>
+          {% endfor %}
+      {% endif %}
+  {% endwith %}
+</div>
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-12">
+      <div class="card">
+        <div class="card-body">
+          <h1>Login</h1>
+          <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+              {{ form.email.label(class="form-control-label") }}
+              {{ form.email(class="form-control") }}
+            </div>
+            <div class="form-group">
+              {{ form.password.label(class="form-control-label") }}
+              {{ form.password(class="form-control") }}
+            </div>
+            <button type="submit" class="btn btn-custom">Login</button>
+          </form>
+          <p class="text-muted mt-3">
+            Don't have an account? <a href="{{ url_for('main.register') }}">Sign up</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  // Automatically hide alert after 5 seconds (5000ms)
+  setTimeout(function () {
+      let alerts = document.querySelectorAll(".alert");
+      alerts.forEach(alert => {
+          let bsAlert = new bootstrap.Alert(alert);
+          bsAlert.close();
+      });
+  }, 3000);
+</script>
+{% endblock content %}

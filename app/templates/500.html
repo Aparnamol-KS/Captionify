@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block style %}
+<style>
+    .error-container {
+        height: 100vh;
+        /* Full height */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    img {
+        max-width: 100%;
+        /* Make image responsive */
+        height: auto;
+    }
+
+    ::-webkit-scrollbar {
+        display: none;
+
+    }
+
+    .btn {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 15px 30px;
+        background-color: #66FCF1;
+        color: #0B0C10;
+        text-decoration: none;
+        font-size: 20px;
+        font-weight: 600;
+        border-radius: 30px;
+        transition: transform 0.3s;
+
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        background-color: #0B0C10;
+        color: #fff;
+        font-family: "Merriweather", serif;
+        font-size: 1rem;
+    }
+
+    .btn:hover {
+        transform: scale(1.05);
+        color: #0B0C10;
+        background-color: #66FCF1;
+    }
+    .image{
+        scale:0.1;
+    }
+</style>
+{% endblock style %}
+
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center align-items-center error-container">
+        <div class="col-md-6">
+            <h1 class="display-4 text-danger">404 Internal Server Error</h1>
+            <p class="lead text-white ">Sorry, sometimes this happens.</p>
+            <a href="/" class="btn btn-primary mt-4">Go Back Home</a>
+        </div>
+    </div>
+</div>
+{% endblock content %}

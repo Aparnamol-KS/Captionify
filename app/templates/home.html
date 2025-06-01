@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+{% include 'navbar.html' %}
+{% block style %}
+<style>
+    .dm-sans-font {
+        font-family: "DM Sans", serif;
+        font-optical-sizing: auto;
+        font-weight: 400;
+        font-style: normal;
+
+    }
+    .alert-container {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1050; /* Ensure it's above all other elements */
+            width: 100%;
+        }
+
+    .merriweather-light {
+        font-family: "Merriweather", serif;
+        font-weight: 300;
+        font-style: normal;
+    }
+
+    .merriweather-regular {
+        font-family: "Merriweather", serif;
+        font-weight: 400;
+        font-style: normal;
+    }
+
+    .merriweather-regular-italic {
+        font-family: "Merriweather", serif;
+        font-weight: 400;
+        font-style: italic;
+    }
+
+    .merriweather-bold {
+        font-family: "Merriweather", serif;
+        font-weight: 700;
+        font-style: normal;
+    }
+
+
+    body {
+        margin: 0;
+        padding: 0;
+        background-color: #0B0C10;
+        color: #fff;
+        font-family:  "Merriweather", serif;
+        font-size:1rem;
+    }
+
+    /* Hide Scrollbar */
+    ::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Header Section */
+    .header {
+        text-align: center;
+        padding: 30px 10px;
+    }
+    .boxes{
+        text-decoration: none;
+        color:white;
+    }
+
+    .boxes:hover{
+        text-decoration: none;
+        color:white;
+    }
+
+    .header h1 {
+        margin-top: 50px;
+        font-size: 5rem;
+        text-align: center;
+        font-family: fantasy;
+        color: #66FCF1;
+        font-weight: lighter;
+    }
+
+    .heading{
+        margin-top: 20px;
+        font-size: 5rem;
+        text-align: center;
+        font-family: fantasy;
+        color: #66FCF1;
+        font-weight: lighter;
+    }
+
+    label,.para {
+        font-size: 19px;
+    }
+    .header p  {
+        font-size: 1.3rem;
+        margin: 30px 10px;
+        opacity: 0.9;
+    }
+
+    /* Features Section */
+    .feature-box {
+        background-color: #1a1a1a;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(102, 252, 241, 0.3);
+        padding: 20px;
+        text-align: center;
+        transition: transform 0.3s;
+    }
+
+    .feature-box:hover {
+        transform: scale(1.05);
+    }
+
+    .micro-icon {
+        font-size: 80px;
+        margin: 20px;
+    }
+
+    .feature-box h2 {
+        font-size: 25px;
+        color: #66FCF1;
+        font-weight: 700;
+    }
+
+    .feature-box p {
+        font-size: 16px;
+        color: #ccc;
+    }
+
+    .btn {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 15px 30px;
+        background-color: #66FCF1;
+        color: #0B0C10;
+        text-decoration: none;
+        font-size: 20px;
+        font-weight: 600;
+        border-radius: 30px;
+        transition: transform 0.3s;
+
+    }
+    .submitbutton{
+        width:20%;
+    }
+    .submitbutton:hover{
+        color: #0B0C10;
+        background-color:#66FCF1;
+        
+    }
+    .btn:hover {
+        transform: scale(1.05);
+        color: #0B0C10;
+    }
+</style>
+{% endblock style %}
+
+
+{% block content %}
+<div class="alert-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
+<!-- Header -->
+<div class="header">
+    <h1 >Welcome to Captionify</h1>
+    <p>🚀 Unlock seamless learning with real-time captions 📝 and instant summaries ⚡!</p>
+</div>
+
+<!-- Features Section -->
+<section class="home">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-12 text-center">
+                {% if current_user.is_authenticated %}
+                <h2 class="text-center">Hello, {{ current_user.username }}!</h2>
+                {% else %}
+                <a href="{{ url_for('main.register')}}" class="btn mx-2 d-inline-block w-25">Register</a>
+                <a href="{{ url_for('main.login') }}" class="btn mx-2 d-inline-block w-25">Log In</a>
+                {% endif %}
+            </div>
+        </div>
+
+
+        <div class="row mt-5 justify-content-center mb-2">
+            <div class="col-md-4 col-10 p-3">
+                <a class="boxes" href="{{url_for('main.live_transcription')}}">
+                    <div class="feature-box">
+                        <i class="fa-solid fa-microphone micro-icon"></i>
+                        <h2>Live Caption Now</h3>
+                            <p>Start real-time captioning and convert speech to text instantly.</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4 col-10 p-3">
+                <a class="boxes" href="{{ url_for('main.pdfs') }}">
+                    <div class="feature-box">
+                        <i class="fa-solid fa-file-pdf micro-icon"></i>
+                        <h2>Access PDFs</h2>
+                        <p>View and download previously generated lecture PDFs.</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4 col-10 p-3  ">
+                <a class="boxes" href="{{ url_for('main.summary_list') }}">
+                    <div class="feature-box">
+                        <i class="fa-solid fa-book micro-icon"></i>
+                        <h2> View Summaries</h2>
+                        <p>Access lecture summaries for quick review and notes.</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+
+<section class="about p-5">
+    <div class="container">
+        <h1 class="heading mt-5 mb-3 p-2">About Us</h1>
+        <div class="row align-items-center p-5">
+            <!-- Text Content -->
+            <div class="col-md-12 text-center">
+                <p class="para">
+                    At <strong>Captionify</strong>, we believe in making learning more accessible and efficient. Our 
+                    AI-powered platform transforms spoken lectures into real-time captions, ensuring no detail is missed. 
+                    We go beyond transcription by offering emotion analysis to enhance engagement and automated summaries for quick revision.
+                </p>
+                <p class="para">
+                    With a focus on innovation and inclusivity, Captionify empowers students, educators, and professionals 
+                    with smart tools for seamless note-taking and enhanced understanding. Whether you're attending a lecture, 
+                    revisiting past notes, or analyzing insights, Captionify keeps you ahead.
+                </p>
+                <p class="para"><strong>Join us in shaping the future of AI-driven education! 🚀</strong></p>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<section class="contact p-4 mb-5">
+    <div class="container">
+        <h1 class="heading text-center mb-4">Contact Us</h1>
+        <div class="row justify-content-center">
+            <div class="col-md-12">
+                <form>
+                    <!-- Name Field -->
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="name" placeholder="Enter your name" required>
+                    </div>
+
+                    <!-- Email Field -->
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email address</label>
+                        <input type="email" class="form-control" id="email" placeholder="Enter your email" required>
+                        
+                    </div>
+
+                    <!-- Message Field -->
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Message</label>
+                        <textarea class="form-control" id="message" rows="4" placeholder="Write your message" required></textarea>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="text-center">
+                        <button type="submit" class=" submitbutton btn btn-primary px-4">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="bg-dark text-light p-5">
+    <div class="container">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center border-top pt-3">
+            <p class="mb-0">&copy; 2025 Captionify. All rights reserved.</p>
+            <ul class="list-unstyled d-flex mb-0">
+                <li class="mx-2">
+                    <a class="text-light" href="#"><i class="fab fa-twitter fa-lg"></i></a>
+                </li>
+                <li class="mx-2">
+                    <a class="text-light" href="#"><i class="fab fa-instagram fa-lg"></i></a>
+                </li>
+                <li class="mx-2">
+                    <a class="text-light" href="#"><i class="fab fa-facebook fa-lg"></i></a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</footer>
+
+<script>
+    // Automatically hide alert after 5 seconds (5000ms)
+    setTimeout(function () {
+        let alerts = document.querySelectorAll(".alert");
+        alerts.forEach(alert => {
+            let bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+</script>
+{% endblock content %}

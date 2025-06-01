@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+{% include 'navbar.html' %}
+
+{% block style %}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Merriweather', serif;
+    }
+
+    body {
+        background-color: #0B0C10;
+
+    }
+
+    .header {
+        text-align: center;
+        margin-top: 70px;
+    }
+
+    .header h1 {
+        margin-top: 15px;
+        font-size: 3rem;
+        text-align: center;
+        font-family: fantasy;
+        color: #66FCF1;
+        font-weight: lighter;
+    }
+
+    .transcription-box {
+        width: 100%;
+        height: 65vh;
+        background-color: #1a1c22;
+        padding: 20px;
+        font-size: 1.17rem;
+        overflow-y: auto;
+        box-shadow: 0px 4px 8px rgba(53, 44, 44, 0.664);
+        border-radius: 10px;
+        color: #EBE9E1;
+        margin: 20px;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .transcription-box::-webkit-scrollbar {
+        display: none;
+    }
+
+
+    .button {
+        background-color: #0B0C10;
+        border: 2px solid #66FCF1;
+        color: white;
+        padding: 15px;
+        font-size: 16px;
+        text-align: center;
+        cursor: pointer;
+        border-radius: 8px;
+        margin: 0 10px;
+        box-shadow: 0px 4px 6px rgba(232, 228, 228, 0.689);
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+
+    .button:hover {
+        transform: scale(1.05);
+    }
+
+    /* Disabled button style */
+    .button:disabled {
+        background-color: #4A4A4A;
+        border: 2px solid #A9A9A9;
+        color: #B0B0B0;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+    }
+
+    .alert-container {
+        position: fixed;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1050;
+        /* Ensure it's above all other elements */
+        width: 100%;
+    }
+</style>
+{% endblock style %}
+
+{% block content %}
+<div class="alert-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+</div>
+<div class="header">
+    <h1>LIVE TRANSCRIPTION</h1>
+</div>
+
+<!-- Transcription Box -->
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-12">
+            <div class="transcription-box" id="transcription" contenteditable="false">
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Form for summarization and buttons -->
+    <div class="row justify-content-center mt-3">
+
+
+        <div class="row justify-content-center w-100 text-center">
+            <!-- Start Recording -->
+            <div class="col-md-2 col-6 mb-2">
+                <button class="button w-100" id="start-btn" onclick="startRecording()">Start Recording</button>
+            </div>
+
+            <!-- Stop Recording -->
+            <div class="col-md-2 col-6 mb-2">
+                <button class="button w-100" id="stop-btn" onclick="stopRecording()">Stop Recording</button>
+            </div>
+
+            <!-- Save as PDF -->
+            <div class="col-md-2 col-6 mb-2">
+                <form action="{{ url_for('main.save_pdf') }}" method="post" onsubmit="prepareTranscription()"
+                    class="w-100">
+                    <input type="hidden" id="transcription_text" name="transcription_text">
+                    <button type="submit" class="button w-100">Save as PDF</button>
+                </form>
+            </div>
+
+            <!-- Summarize -->
+            <div class="col-md-2 col-6 mb-2">
+                <form action="/summary" method="post" class="w-100" onsubmit="prepareTranscriptionForSummarize()">
+                    <input type="hidden" name="transcript" id="transcript-input">
+                    <button type="submit" class="button w-100">Summarize</button>
+                </form>
+            </div>
+
+            <!-- Clear -->
+            <div class="col-md-2 col-6 mb-2">
+                <button id="clear-btn" class="button w-100">Clear</button>
+            </div>
+
+            <div class="col-md-2">
+                <button type="button" id="edit-btn" class="button w-100" onclick="toggleEdit()">Edit</button>
+            </div>
+
+        </div>
+
+
+    </div>
+</div>
+
+<script>
+    var socket = io();
+
+    // Receive live transcription from server and update UI
+    socket.on('transcription', function (data) {
+        let transcriptionBox = document.getElementById("transcription");
+        transcriptionBox.innerText += " " + data;
+        transcriptionBox.scrollTop = transcriptionBox.scrollHeight; // Auto-scroll to bottom
+        updateButtonState();
+    });
+    window.onload = function () {
+    updateButtonState();
+};
+
+function startRecording() {
+    fetch('/live_transcription/start_recording')
+        .then(response => response.json())
+        .then(data => {
+            console.log("Recording started:", data);
+            console.log("Recording started:", data);
+            let startBtn = document.getElementById("start-btn");
+            startBtn.disabled = true;
+            startBtn.innerText = "Recording...";
+            startBtn.style.backgroundColor = "red";
+            startBtn.style.color = "white";
+            document.getElementById("stop-btn").disabled = false;
+            document.getElementById("clear-btn").disabled = true;
+            document.getElementById("edit-btn").disabled = true;
+            document.querySelector("form[action='/summary'] button").disabled = true;
+            document.querySelector("form[action='{{ url_for('main.save_pdf') }}'] button").disabled = true;
+        })
+        .catch(error => console.error("Error starting recording:", error));
+}
+
+
+    function stopRecording() {
+    fetch('/live_transcription/stop_recording')
+        .then(response => response.json())
+        .then(data => {
+            // if (data.transcription) {
+            //     document.getElementById("transcription").innerText = data.transcription;
+            //     updateButtonState();
+            // } else {
+            //     alert("Error: No transcription received.");
+            // }
+            let startBtn = document.getElementById("start-btn");
+            startBtn.disabled = false;
+            startBtn.innerText = "Start Recording";
+            startBtn.style.backgroundColor = "";
+            startBtn.style.color = "";
+            document.getElementById("stop-btn").disabled = true;
+            document.getElementById("clear-btn").disabled = false;
+            document.getElementById("edit-btn").disabled = false;
+            document.querySelector("form[action='/summary'] button").disabled = false;
+            document.querySelector("form[action='{{ url_for('main.save_pdf') }}'] button").disabled = false;
+        })
+        .catch(error => console.error("Error stopping recording:", error));
+}
+
+
+    function prepareTranscription() {
+        document.getElementById("transcription_text").value =
+            document.getElementById("transcription").innerText.trim();
+    }
+
+    document.getElementById("clear-btn").addEventListener("click", function () {
+        document.getElementById("transcription").innerText = ""; // Clears the div content
+        updateButtonState();
+    });
+
+    function toggleEdit() {
+        let transcriptionBox = document.getElementById("transcription");
+        let editButton = document.getElementById("edit-btn");
+
+        if (transcriptionBox.contentEditable === "true") {
+            transcriptionBox.contentEditable = "false";
+            editButton.innerText = "Edit";
+        } else {
+            transcriptionBox.contentEditable = "true";
+            transcriptionBox.focus();
+            editButton.innerText = "Save";
+        }
+    }
+
+    function prepareTranscriptionForSummarize() {
+        document.getElementById("transcript-input").value = document.getElementById("transcription").innerText;
+    }
+
+    function updateButtonState() {
+    let transcriptionText = document.getElementById("transcription").innerText.trim();
+    
+    let clearBtn = document.getElementById("clear-btn");
+    let editBtn = document.getElementById("edit-btn");
+
+    clearBtn.disabled = transcriptionText === "";
+    editBtn.disabled = transcriptionText === "";
+}
+
+
+    // Automatically hide alerts after 5 seconds
+    setTimeout(function () {
+        let alerts = document.querySelectorAll(".alert");
+        alerts.forEach(alert => {
+            let bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+</script>
+
+{% endblock content %}

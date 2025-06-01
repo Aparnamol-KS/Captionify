@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% include 'navbar.html' %}
+
+{% block style %}
+<style>
+    body {
+        background-color: #000000;
+        font-family: 'Merriweather', serif;
+        color: white;
+        padding-top: 70px;
+    }
+    /* Hide Scrollbar */
+    ::-webkit-scrollbar {
+        display: none;
+    }
+    .container {
+        max-width: 900px;
+        margin: auto;
+    }
+
+    /* Page Heading */
+    .heading {
+        font-size: 3rem;
+        text-align: center;
+        font-family: fantasy;
+        color: #66FCF1;
+        font-weight: lighter;
+        margin-bottom: 40px;
+    }
+
+    /* Summary & Full Transcription Box */
+    .content-box {
+        background-color: #1a1a1a;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px #66FCF1;
+        margin-bottom: 25px;
+    }
+
+    .content-box:hover {
+        box-shadow: 0 6px 15px #66FCF1;
+    }
+
+    .content-title {
+        color: #66FCF1;
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+    }
+
+    .content-text {
+        font-size: 1.2rem;
+        line-height: 1.6;
+    }
+
+    /* Back Button */
+
+    .btn-back {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 15px 30px;
+        background-color: #66FCF1;
+        color: #0B0C10;
+        text-decoration: none;
+        font-size: 20px;
+        font-weight: 600;
+        border-radius: 30px;
+        transition: transform 0.3s;
+
+    }
+    .btn-back:hover {
+        transform: scale(1.05);
+        color:#0B0C10;
+        text-decoration: none;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .content-box {
+            font-size: 16px;
+            padding: 15px;
+        }
+    }
+</style>
+{% endblock style %}
+
+{% block content %}
+<!-- 🔹 Summary Details Page -->
+<div class="container">
+    <div class="heading">Summary Details</div>
+
+    <!-- Summary Section -->
+    <div class="content-box">
+        <h2 class="content-title">Summary</h2>
+        <p class="content-text">{{ summary.summary_text }}</p>
+    </div>
+
+    <!-- Full Transcription Section -->
+    <div class="content-box mt-5">
+        <h2 class="content-title">Full Transcription</h2>
+        <p class="content-text">{{ caption.text }}</p>
+    </div>
+
+    <!-- Back Button -->
+    <a href="{{ url_for('main.summary_list') }}" class="btn-back text-center w-100 mb-5">Back to Summaries</a>
+</div>
+{% endblock content %}

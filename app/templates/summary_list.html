@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% include 'navbar.html' %}
+{% block style %}
+<style>
+    body {
+        background-color: #000000;
+        font-family: 'Merriweather', serif;
+        color: white;
+        padding-top: 70px;
+        /* Space for fixed navbar */
+    }
+
+
+    /* Page Heading */
+    .heading {
+        font-size: 4rem;
+        text-align: center;
+        font-family: fantasy;
+        color: #66FCF1;
+        font-weight: lighter;
+        margin-bottom: 40px;
+    }
+    /* Hide Scrollbar */
+    ::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Summary List Container */
+    .container {
+        max-width: 900px;
+        margin: auto;
+    }
+
+    /* Summary Card */
+    .summary-card {
+        background-color: #1a1a1a;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px #66FCF1;
+        margin-bottom: 25px;
+        transition: 0.3s ease-in-out;
+    }
+
+    .summary-card:hover {
+        box-shadow: 0 6px 15px #66FCF1;
+        transform: translateY(-3px);
+    }
+
+    .summary-card a{
+        text-decoration: none;
+        color:white;
+    }
+
+    .summary-text {
+        font-size: 18px;
+    }
+
+    .timestamp {
+        font-size: 13px;
+        color: gray;
+    }
+
+    /* No Summary Message */
+    .no-summary {
+        text-align: center;
+        font-size: 20px;
+        color: #66FCF1;
+        margin-top: 20px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .summary-card {
+            font-size: 16px;
+            padding: 10px;
+        }
+    }
+</style>
+{% endblock style %}
+
+{% block content %}
+<!-- 🔹 Summary List -->
+<div class="container">
+    <div class="heading">Summaries</div>
+
+    {% if summaries %}
+    {% for summary, timestamp in summaries %}
+    <div class="summary-card">
+        <a href="{{ url_for('main.view_summary', summary_id=summary.id) }}">
+            <p class="summary-text">{{ summary.summary_text[:50] }}.....</p>
+            <p class="timestamp">Created on: {{ timestamp.strftime('%Y-%m-%d %H:%M') }}</p>
+        </a>
+    </div>
+    {% endfor %}
+
+    {% else %}
+    <p class="no-summary">No summaries available.</p>
+    {% endif %}
+</div>
+{% endblock content %}
