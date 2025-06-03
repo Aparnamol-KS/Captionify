@@ -7,19 +7,20 @@ from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO
 from app.utiles.transcriber import SpeechTranscriber
 from app.utiles.pdf_generator import generate_pdf
-from app.utiles.summarizer import TextSummarizer 
+from app.utiles.Langchain import summary_fn,clean_transcription
 from io import BytesIO
 from datetime import datetime
 from difflib import SequenceMatcher
 import os
+import markdown
+
 
 from app import socketio 
-main = Blueprint('main', __name__)  # Define Blueprint
+main = Blueprint('main', __name__) 
 
 
 # Initialize global variables
 transcriber = None
-summarizer = None  # Lazy loading
 
 
 def initialize_services():
@@ -70,8 +71,10 @@ def stop_recording():
             
         else:
             # Create a new transcription entry
+            #-----------------------Latex covertion----------------------------
+            converted_text = clean_transcription(full_text)
             new_caption = Caption(
-                text=full_text,
+                text=converted_text,
                 user_id=current_user.id,
                 timestamp=datetime.utcnow()
             )
@@ -91,7 +94,6 @@ def stop_recording():
             "status": "Error",
             "message": "Transcriber not initialized"
         }), 500
-
 
 
 @main.route('/edit_caption/<int:caption_id>', methods=['POST'])
@@ -247,22 +249,20 @@ def live_transcription():
 @main.route('/summary', methods=['POST', 'GET'])
 @login_required
 
+def markdown_to_html(text):
+    return markdown.markdown(text)
+
 def summary():
     if request.method == 'POST':
         transcript = request.form.get("transcript", "").strip()
 
-        global summarizer  
-        if summarizer is None:
-            summarizer = TextSummarizer()
-
         if not transcript:
             flash("No text provided for summarization.", "warning")
             return redirect(url_for("main.summary"))
-
+    
         # Perform summarization
-        summary_text = summarizer.summarize(transcript)  
-        print("✅ Summary generated successfully!")  
-
+        summary_text = summary_fn(transcript)  
+        print("✅ Summary generated successfully!") 
         # Fetch all captions for the user
         user_captions = Caption.query.filter_by(user_id=current_user.id).all()
 
@@ -283,11 +283,15 @@ def summary():
         new_summary = Summary(caption_id=existing_caption.id, summary_text=summary_text)
         db.session.add(new_summary)
         db.session.commit()
+        
 
+        html_summary = markdown_to_html(summary_text)
         flash("Summary saved successfully!", "success")
-        return render_template("summary.html", summary=summary_text)
+        return render_template("summary.html", summary=html_summary)
 
     return render_template("summary.html", summary="No summary available.")
+    
+
 def text_similarity(text1, text2):
     """Returns a similarity ratio between two texts."""
     return SequenceMatcher(None, text1, text2).ratio()
@@ -346,17 +350,13 @@ def profile():
 
     return render_template("profile.html", user=current_user) 
 
-# Logout route
+
 @main.route('/logout')
 def logout():
     logout_user()
     flash('You have been logged out.', 'info')
     return redirect(url_for('main.home'))
 
-# Index page
-@main.route('/index')
-def index():
-    return render_template("index.html")
 
 @main.route('/pdfs')
 @login_required
@@ -381,20 +381,14 @@ def view_summary(summary_id):
 @main.route('/view_pdf/<int:pdf_id>')
 @login_required
 def view_pdf(pdf_id):
-    pdf = PDFUpload.query.get_or_404(pdf_id)  # Fetch the PDF from the database
+    pdf = PDFUpload.query.get_or_404(pdf_id)
     
-    # Ensure the correct directory where PDFs are stored
     pdf_directory = os.path.join(current_app.root_path, 'uploads')  
     
-    # Check if file exists
     if not os.path.exists(os.path.join(pdf_directory, pdf.filename)):
         return "File not found", 404
     
-    # Serve the PDF file
     return send_from_directory(pdf_directory, pdf.filename)
-
-
- 
 
 
 # Error Handlers

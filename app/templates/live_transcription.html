@@ -54,7 +54,7 @@
         border: 2px solid #66FCF1;
         color: white;
         padding: 15px;
-        font-size: 16px;
+        font-size: 25px;
         text-align: center;
         cursor: pointer;
         border-radius: 8px;
@@ -110,7 +110,7 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-12">
-            <div class="transcription-box" id="transcription" contenteditable="false">
+            <div class="transcription-box" id="transcription" aria-live="polite" contenteditable="false">
 
             </div>
         </div>
@@ -122,39 +122,44 @@
 
         <div class="row justify-content-center w-100 text-center">
             <!-- Start Recording -->
-            <div class="col-md-2 col-6 mb-2">
-                <button class="button w-100" id="start-btn" onclick="startRecording()">Start Recording</button>
+            <div class="col-md-1 col-6 mb-2">
+                <button class="button w-100"  title ="Start recording!" id="start-btn" onclick="startRecording()"><i id="rec-start" class="fa-solid fa-microphone"></i></button>
             </div>
 
             <!-- Stop Recording -->
-            <div class="col-md-2 col-6 mb-2">
-                <button class="button w-100" id="stop-btn" onclick="stopRecording()">Stop Recording</button>
+            <div class="col-md-1 col-6 mb-2">
+                <button class="button w-100"  title = "Stop recording!" id="stop-btn" onclick="stopRecording()"><i class="fa-solid fa-stop"></i></button>
             </div>
 
             <!-- Save as PDF -->
-            <div class="col-md-2 col-6 mb-2">
+            <div class="col-md-1 col-6 mb-2">
                 <form action="{{ url_for('main.save_pdf') }}" method="post" onsubmit="prepareTranscription()"
                     class="w-100">
                     <input type="hidden" id="transcription_text" name="transcription_text">
-                    <button type="submit" class="button w-100">Save as PDF</button>
+                    <button type="submit"  title ="Save as PDF" class="button w-100"><i
+                            class="fa-solid fa-file-pdf"></i></button>
                 </form>
             </div>
 
             <!-- Summarize -->
-            <div class="col-md-2 col-6 mb-2">
+            <div class="col-md-1 col-6 mb-2">
                 <form action="/summary" method="post" class="w-100" onsubmit="prepareTranscriptionForSummarize()">
                     <input type="hidden" name="transcript" id="transcript-input">
-                    <button type="submit" class="button w-100">Summarize</button>
+                    <button type="submit"  title ="Summarize!" class="button w-100"><i class="fa-solid fa-book"></i></button>
                 </form>
             </div>
 
             <!-- Clear -->
-            <div class="col-md-2 col-6 mb-2">
-                <button id="clear-btn" class="button w-100">Clear</button>
+            <div class="col-md-1 col-6 mb-2">
+                <button id="clear-btn"  title ="clear" class="button w-100"><i class="fa-solid fa-eraser"></i></button>
             </div>
 
-            <div class="col-md-2">
-                <button type="button" id="edit-btn" class="button w-100" onclick="toggleEdit()">Edit</button>
+            <div class="col-md-1">
+                <button type="button" id="edit-btn"  title ="Edit Transcription" class="button w-100" onclick="toggleEdit()"><i id="editIcon" class="fa-solid fa-pen-to-square"></i></button>
+            </div>
+
+            <div class="col-md-1">
+                <button type="button" id="save-btn"  title ="Save to refer later" class="button w-100"><i class="fa-solid fa-cloud-arrow-up"></i></i></button>
             </div>
 
         </div>
@@ -174,53 +179,52 @@
         updateButtonState();
     });
     window.onload = function () {
-    updateButtonState();
-};
+        updateButtonState();
+    };
 
-function startRecording() {
-    fetch('/live_transcription/start_recording')
-        .then(response => response.json())
-        .then(data => {
-            console.log("Recording started:", data);
-            console.log("Recording started:", data);
-            let startBtn = document.getElementById("start-btn");
-            startBtn.disabled = true;
-            startBtn.innerText = "Recording...";
-            startBtn.style.backgroundColor = "red";
-            startBtn.style.color = "white";
-            document.getElementById("stop-btn").disabled = false;
-            document.getElementById("clear-btn").disabled = true;
-            document.getElementById("edit-btn").disabled = true;
-            document.querySelector("form[action='/summary'] button").disabled = true;
-            document.querySelector("form[action='{{ url_for('main.save_pdf') }}'] button").disabled = true;
-        })
-        .catch(error => console.error("Error starting recording:", error));
-}
+    function startRecording() {
+        fetch('/live_transcription/start_recording')
+            .then(response => response.json())
+            .then(data => {
+                console.log("Recording started:", data);
+                console.log("Recording started:", data);
+                let startBtn = document.getElementById("start-btn");
+                startBtn.disabled = true;
+                startBtn.style.backgroundColor = "red";
+                startBtn.style.color = "white";
+                document.getElementById("stop-btn").disabled = false;
+                document.getElementById("clear-btn").disabled = true;
+                document.getElementById("edit-btn").disabled = true;
+                document.querySelector("form[action='/summary'] button").disabled = true;
+                document.querySelector("form[action='{{ url_for('main.save_pdf') }}'] button").disabled = true;
+            })
+            .catch(error => console.error("Error starting recording:", error));
+    }
 
 
     function stopRecording() {
-    fetch('/live_transcription/stop_recording')
-        .then(response => response.json())
-        .then(data => {
-            // if (data.transcription) {
-            //     document.getElementById("transcription").innerText = data.transcription;
-            //     updateButtonState();
-            // } else {
-            //     alert("Error: No transcription received.");
-            // }
-            let startBtn = document.getElementById("start-btn");
-            startBtn.disabled = false;
-            startBtn.innerText = "Start Recording";
-            startBtn.style.backgroundColor = "";
-            startBtn.style.color = "";
-            document.getElementById("stop-btn").disabled = true;
-            document.getElementById("clear-btn").disabled = false;
-            document.getElementById("edit-btn").disabled = false;
-            document.querySelector("form[action='/summary'] button").disabled = false;
-            document.querySelector("form[action='{{ url_for('main.save_pdf') }}'] button").disabled = false;
-        })
-        .catch(error => console.error("Error stopping recording:", error));
-}
+        fetch('/live_transcription/stop_recording')
+            .then(response => response.json())
+            .then(data => {
+                // if (data.transcription) {
+                //     document.getElementById("transcription").innerText = data.transcription;
+                //     updateButtonState();
+                // } else {
+                //     alert("Error: No transcription received.");
+                // }
+                let startBtn = document.getElementById("start-btn");
+                startBtn.disabled = false;
+                
+                startBtn.style.backgroundColor = "";
+                startBtn.style.color = "";
+                document.getElementById("stop-btn").disabled = true;
+                document.getElementById("clear-btn").disabled = false;
+                document.getElementById("edit-btn").disabled = false;
+                document.querySelector("form[action='/summary'] button").disabled = false;
+                document.querySelector("form[action='{{ url_for('main.save_pdf') }}'] button").disabled = false;
+            })
+            .catch(error => console.error("Error stopping recording:", error));
+    }
 
 
     function prepareTranscription() {
@@ -235,16 +239,30 @@ function startRecording() {
 
     function toggleEdit() {
         let transcriptionBox = document.getElementById("transcription");
-        let editButton = document.getElementById("edit-btn");
+        // let editButton = document.getElementById("edit-btn");
+
+        let icon = document.getElementById("editIcon");
 
         if (transcriptionBox.contentEditable === "true") {
             transcriptionBox.contentEditable = "false";
-            editButton.innerText = "Edit";
+            icon.className = "fa-solid fa-pen-to-square";
+            icon.title = "Edit Transcription" 
         } else {
             transcriptionBox.contentEditable = "true";
             transcriptionBox.focus();
-            editButton.innerText = "Save";
+            icon.className = "fa-regular fa-floppy-disk";
+            icon.title = "Save edit" 
         }
+
+
+        // if (transcriptionBox.contentEditable === "true") {
+        //     transcriptionBox.contentEditable = "false";
+        //     editButton.innerText = "Edit";
+        // } else {
+        //     transcriptionBox.contentEditable = "true";
+        //     transcriptionBox.focus();
+        //     editButton.innerText = "Save";
+        // }
     }
 
     function prepareTranscriptionForSummarize() {
@@ -252,14 +270,14 @@ function startRecording() {
     }
 
     function updateButtonState() {
-    let transcriptionText = document.getElementById("transcription").innerText.trim();
-    
-    let clearBtn = document.getElementById("clear-btn");
-    let editBtn = document.getElementById("edit-btn");
+        let transcriptionText = document.getElementById("transcription").innerText.trim();
 
-    clearBtn.disabled = transcriptionText === "";
-    editBtn.disabled = transcriptionText === "";
-}
+        let clearBtn = document.getElementById("clear-btn");
+        let editBtn = document.getElementById("edit-btn");
+
+        clearBtn.disabled = transcriptionText === "";
+        editBtn.disabled = transcriptionText === "";
+    }
 
 
     // Automatically hide alerts after 5 seconds
@@ -269,7 +287,7 @@ function startRecording() {
             let bsAlert = new bootstrap.Alert(alert);
             bsAlert.close();
         });
-    }, 5000);
+    }, 3000);
 </script>
 
 {% endblock content %}
