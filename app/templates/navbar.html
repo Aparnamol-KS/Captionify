@@ -1,7 +1,7 @@
 
 <nav class="navbar navbar-expand-lg custom-navbar fixed-top">
     <div class="container-fluid">
-        <a class="navbar-brand " href="{{ url_for('main.home') }}">Captionify</a>
+        <a class="navbar-head navbar-brand" href="{{ url_for('main.home') }}" style="color: white;" >Captionify</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
             aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -54,14 +54,17 @@
       font-size: 15px;
       font-family: 'Merriweather', serif;
   }
-  .navbar-brand {
+  .navbar-head {
       font-family: fantasy;
-        color:white;
         font-weight: lighter;
         font-size: 20px;
         text-decoration: none;
   }
   .navbar-brand:hover{
+    color:white;
+  }
+
+    .navbar-brand{
     color:white;
   }
 

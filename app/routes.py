@@ -54,103 +54,40 @@ def stop_recording():
             flash("No transcription recorded!", "warning")
             return jsonify({"status": "No transcription recorded."})
 
-        # Fetch all captions for the user
-        user_captions = Caption.query.filter_by(user_id=current_user.id).all()
 
-        # Find a caption with similar text (similarity > 90%)
-        existing_caption = None
-        for caption in user_captions:
-            if text_similarity(full_text, caption.text) > 0.9:
-                existing_caption = caption
-                break
-
-        if existing_caption:
-            # Update the existing transcription
-            existing_caption.text = full_text
-            existing_caption.timestamp = datetime.utcnow()  # Update timestamp
-            
-        else:
-            # Create a new transcription entry
-            #-----------------------Latex covertion----------------------------
-            converted_text = clean_transcription(full_text)
-            new_caption = Caption(
-                text=converted_text,
-                user_id=current_user.id,
-                timestamp=datetime.utcnow()
-            )
-            db.session.add(new_caption)
-
-        db.session.commit()  # Commit changes to database
-
-        return jsonify({
-            "status": "Recording stopped",
-            "message": "Transcription saved!",
-            "transcription": full_text
-        })
-
-    else:
-        flash("Error: Transcriber not initialized!", "danger")
-        return jsonify({
-            "status": "Error",
-            "message": "Transcriber not initialized"
-        }), 500
-
-
-@main.route('/edit_caption/<int:caption_id>', methods=['POST'])
+@main.route('/live_transcription/save_to_db', methods=['POST'])
 @login_required
-def edit_caption(caption_id):
-    """Updates the transcription text in the database or creates a new one if not found."""
-    new_text = request.form.get("edited_text")
+def save_to_db():
+    try:
+        caption_name = request.form.get('caption_name')
+        if caption_name:
+            content = request.form.get('content')
+            converted_text = clean_transcription(content)
 
-    if not new_text or not new_text.strip():
-        flash("Edited text cannot be empty!", "warning")
-        return redirect(url_for("main.live_transcription"))  # Adjust as needed
-
-    # Try to fetch the caption from the database
-    caption = Caption.query.get(caption_id)
-
-    if caption:
-        # Ensure only the owner can edit
-        if caption.user_id != current_user.id:
-            flash("Unauthorized action!", "danger")
-            return redirect(url_for("main.live_transcription"))
-
-        # Update existing caption
-        caption.text = new_text
-        caption.timestamp = datetime.utcnow()  # Update timestamp
-        flash("Transcription updated successfully!", "success")
-
-    else:
-        # If caption does not exist, create a new one
-        new_caption = Caption(
-            text=new_text,
-            user_id=current_user.id,
-            timestamp=datetime.utcnow()
-        )
-        db.session.add(new_caption)
-        flash("New transcription saved!", "success")
-
-    db.session.commit()  # Save changes
-
-    return redirect(url_for("main.live_transcription"))  # Adjust as needed
-
-@main.route('/add_caption', methods=['POST'])
-@login_required
-def add_caption():
-    """Creates a new caption if none exists."""
-    new_text = request.form.get("edited_text")
-
-    if not new_text or not new_text.strip():
-        flash("Caption text cannot be empty!", "warning")
-        return redirect(url_for("main.live_transcription"))
-
-    # Create and store new caption
-    new_caption = Caption(text=new_text, user_id=current_user.id)
-    db.session.add(new_caption)
-    db.session.commit()
-
-    flash("Caption saved successfully!", "success")
-    return redirect(url_for("main.live_transcription"))
+            retrieved_caption = Caption.query.filter_by(caption_name=caption_name).first()
+            if retrieved_caption:
+                # edit the existing one
+                retrieved_caption.text = converted_text
+                retrieved_caption.timestamp = datetime.utcnow()
+                db.session.commit()
+                flash("Transcription updated successfully!", "success")
+                return jsonify({"status": "Data edited successfully"})
+            else:
+                # Create new transcription entry
+                new_caption = Caption(
+                    caption_name = caption_name,
+                    text=converted_text,
+                    user_id=current_user.id,
+                    timestamp=datetime.utcnow()
+                )
+                db.session.add(new_caption)
+                db.session.commit() 
+                flash("New transcription saved!", "success")
+                return jsonify({"status": "Data successfully stored"})
+    except Exception as e:
+        # Log error in terminal
+        print("Error:", e)
+        return jsonify({"error": str(e)}), 500
 
 
 @main.route('/live_transcription/make_pdf', methods=['POST'])
@@ -238,13 +175,6 @@ def save_summary_pdf():
     flash("Error generating summarized PDF.", "danger")
     return redirect(url_for("main.summary"))
 
-@main.route('/live_transcription')
-@login_required
-def live_transcription():
-    """Renders the live transcription page and fetches the latest caption if available."""
-    caption = Caption.query.filter_by(user_id=current_user.id).order_by(Caption.timestamp.desc()).first()  # Get the latest caption
-
-    return render_template("live_transcription.html", caption=caption)  
 
 @main.route('/summary', methods=['POST', 'GET'])
 @login_required

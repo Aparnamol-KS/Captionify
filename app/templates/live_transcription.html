@@ -87,6 +87,16 @@
         /* Ensure it's above all other elements */
         width: 100%;
     }
+
+    /* Blur background when modal is shown */
+    body.modal-open .main-content {
+        filter: blur(5px);
+    }
+
+    /* Optional dark overlay */
+    .modal-backdrop.show {
+        opacity: 0.5;
+    }
 </style>
 {% endblock style %}
 
@@ -116,6 +126,7 @@
         </div>
     </div>
 
+
     <!-- Form for summarization and buttons -->
     <div class="row justify-content-center mt-3">
 
@@ -123,12 +134,14 @@
         <div class="row justify-content-center w-100 text-center">
             <!-- Start Recording -->
             <div class="col-md-1 col-6 mb-2">
-                <button class="button w-100"  title ="Start recording!" id="start-btn" onclick="startRecording()"><i id="rec-start" class="fa-solid fa-microphone"></i></button>
+                <button class="button w-100" title="Start recording!" id="start-btn" onclick="startRecording()"><i
+                        id="rec-start" class="fa-solid fa-microphone"></i></button>
             </div>
 
             <!-- Stop Recording -->
             <div class="col-md-1 col-6 mb-2">
-                <button class="button w-100"  title = "Stop recording!" id="stop-btn" onclick="stopRecording()"><i class="fa-solid fa-stop"></i></button>
+                <button class="button w-100" title="Stop recording!" id="stop-btn" onclick="stopRecording()"><i
+                        class="fa-solid fa-stop"></i></button>
             </div>
 
             <!-- Save as PDF -->
@@ -136,7 +149,7 @@
                 <form action="{{ url_for('main.save_pdf') }}" method="post" onsubmit="prepareTranscription()"
                     class="w-100">
                     <input type="hidden" id="transcription_text" name="transcription_text">
-                    <button type="submit"  title ="Save as PDF" class="button w-100"><i
+                    <button type="submit" title="Save as PDF" class="button w-100"><i
                             class="fa-solid fa-file-pdf"></i></button>
                 </form>
             </div>
@@ -145,21 +158,26 @@
             <div class="col-md-1 col-6 mb-2">
                 <form action="/summary" method="post" class="w-100" onsubmit="prepareTranscriptionForSummarize()">
                     <input type="hidden" name="transcript" id="transcript-input">
-                    <button type="submit"  title ="Summarize!" class="button w-100"><i class="fa-solid fa-book"></i></button>
+                    <button type="submit" title="Summarize!" class="button w-100"><i
+                            class="fa-solid fa-book"></i></button>
                 </form>
             </div>
 
             <!-- Clear -->
             <div class="col-md-1 col-6 mb-2">
-                <button id="clear-btn"  title ="clear" class="button w-100"><i class="fa-solid fa-eraser"></i></button>
+                <button id="clear-btn" title="clear" class="button w-100"><i class="fa-solid fa-eraser"></i></button>
             </div>
 
-            <div class="col-md-1">
-                <button type="button" id="edit-btn"  title ="Edit Transcription" class="button w-100" onclick="toggleEdit()"><i id="editIcon" class="fa-solid fa-pen-to-square"></i></button>
+            <div class="col-md-1 col-6 mb-2">
+                <button type="button" id="edit-btn" title="Edit Transcription" class="button w-100"
+                    onclick="toggleEdit()"><i id="editIcon" class="fa-solid fa-pen-to-square"></i></button>
             </div>
 
-            <div class="col-md-1">
-                <button type="button" id="save-btn"  title ="Save to refer later" class="button w-100"><i class="fa-solid fa-cloud-arrow-up"></i></i></button>
+            <div class="col-md-1 col-6 mb-2">
+                <input type="hidden" id="transcription_text_save" name="transcription_text_save">
+                <button type="submit" id="save-btn" onclick="showInputBox(), prepareTranscriptionForSave()"
+                    title="Save to refer later" class="button w-100"><i
+                        class="fa-solid fa-cloud-arrow-up"></i></i></button>
             </div>
 
         </div>
@@ -167,6 +185,29 @@
 
     </div>
 </div>
+
+
+<div class="modal fade" id="inputModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form id="saveForm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Caption Name</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="userNameInput" name="caption_name" class="form-control"
+                        placeholder="Your Name" required />
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 
 <script>
     var socket = io();
@@ -214,7 +255,7 @@
                 // }
                 let startBtn = document.getElementById("start-btn");
                 startBtn.disabled = false;
-                
+
                 startBtn.style.backgroundColor = "";
                 startBtn.style.color = "";
                 document.getElementById("stop-btn").disabled = true;
@@ -239,34 +280,50 @@
 
     function toggleEdit() {
         let transcriptionBox = document.getElementById("transcription");
-        // let editButton = document.getElementById("edit-btn");
 
         let icon = document.getElementById("editIcon");
 
         if (transcriptionBox.contentEditable === "true") {
             transcriptionBox.contentEditable = "false";
             icon.className = "fa-solid fa-pen-to-square";
-            icon.title = "Edit Transcription" 
+            icon.title = "Edit Transcription"
+            prepareTranscriptionForSave()
+
+            const name = document.getElementById('userNameInput').value;
+            const content = document.getElementById('transcription_text_save').value;
+
+            // Prepare form data to send both inputs
+            const formData = new FormData();
+            formData.append('caption_name', name);
+            formData.append('content', content);
+
+            fetch('/live_transcription/save_to_db', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Success edit:', data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+
         } else {
             transcriptionBox.contentEditable = "true";
             transcriptionBox.focus();
             icon.className = "fa-regular fa-floppy-disk";
-            icon.title = "Save edit" 
+            icon.title = "Save edit"
         }
 
-
-        // if (transcriptionBox.contentEditable === "true") {
-        //     transcriptionBox.contentEditable = "false";
-        //     editButton.innerText = "Edit";
-        // } else {
-        //     transcriptionBox.contentEditable = "true";
-        //     transcriptionBox.focus();
-        //     editButton.innerText = "Save";
-        // }
     }
 
     function prepareTranscriptionForSummarize() {
         document.getElementById("transcript-input").value = document.getElementById("transcription").innerText;
+    }
+
+    function prepareTranscriptionForSave() {
+        document.getElementById("transcription_text_save").value = document.getElementById("transcription").innerText;
     }
 
     function updateButtonState() {
@@ -280,6 +337,46 @@
     }
 
 
+
+
+
+
+    const modalEl = new bootstrap.Modal(document.getElementById('inputModal'));
+    function showInputBox() {
+        modalEl.show();
+        setTimeout(() => {
+            document.getElementById('userNameInput').focus();
+        }, 500);
+    }
+
+
+    document.getElementById('saveForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const name = document.getElementById('userNameInput').value;
+        const content = document.getElementById('transcription_text_save').value;
+
+        // Prepare form data to send both inputs
+        const formData = new FormData();
+        formData.append('caption_name', name);
+        formData.append('content', content);
+
+        fetch('/live_transcription/save_to_db', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                modalEl.hide();
+                // Optionally clear input fields or show success message
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    });
+
+
     // Automatically hide alerts after 5 seconds
     setTimeout(function () {
         let alerts = document.querySelectorAll(".alert");
@@ -289,5 +386,4 @@
         });
     }, 3000);
 </script>
-
 {% endblock content %}

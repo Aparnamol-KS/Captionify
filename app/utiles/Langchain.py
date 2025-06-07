@@ -46,14 +46,20 @@ def clean_transcription(transcription):
     clean_prompt = PromptTemplate(
     input_variables=["raw_text"],
     template="""
-        You are a helpful assistant that cleans and corrects lecture transcriptions.
-        The text may contain grammar mistakes, broken sentences, or unstructured content.
-        Fix the grammar and complete any broken sentences to make it clearer, without adding extra information.
+You are a transcription cleaner.
 
-        Raw transcription:
-        {raw_text}
+Task:
+Fix grammar mistakes, broken sentences, and unstructured text in the given lecture transcription. Make the sentences clear and complete — but do not add, summarize, or explain anything.
 
-        Cleaned and structured version:
+Rules:
+- Keep the original meaning and structure.
+- Return only the cleaned paragraph without any explanations, labels, or headings.
+- Do not include any prefix like "Cleaned text:" or wrap the output in quotes.
+
+Input:
+{raw_text}
+
+Output:
         """
     )
 
@@ -63,29 +69,30 @@ def clean_transcription(transcription):
 
 def latex_conversion(cleaned_transcription):
     latex_prompt = PromptTemplate(
-    input_variables=["raw_text"],
-    template="""
-        You are an expert in LaTeX formatting.
+        input_variables=["raw_text"],
+        template="""
+You are a LaTeX converter.
 
-        Task:
-        Convert **only** the mathematical expressions in the given text into LaTeX. Leave all other text exactly as it is.
+Task:
+Replace only the spoken mathematical expressions in the following paragraph with correct LaTeX format using inline math delimiters like \\( ... \\).
 
-        Instructions:
-        - Replace math phrases like "a squared plus b squared equals c squared" with LaTeX-formatted inline math: \( a^2 + b^2 = c^2 \)
-        - Keep all non-math content unchanged (e.g., introductions, explanations, titles).
-        - Use \( ... \) for inline equations.
-        - Do not wrap the whole text in \\documentclass or any LaTeX boilerplate — only convert equations.
-        - Return only the modified text.
+Rules:
+- Only convert math-related parts (e.g., "x squared plus y squared equals z squared" becomes \\(x^2 + y^2 = z^2\\)).
+- Do not change any other part of the text.
+- Do not reword or summarize the paragraph.
+- Do not include any additional text like "Here is your result" or triple quotes.
+- Return the full updated paragraph with math converted, and nothing else.
 
-        Input:
-        \"\"\"
-        {raw_text}
-        \"\"\"
-        """
+Input:
+{raw_text}
+
+Output:
+"""
     )
+
     latex_chain = LLMChain(llm=llm, prompt=latex_prompt)
     output = latex_chain.run({"raw_text": cleaned_transcription})
-    print("latex output::\n",output)
+
     return output
 
 
@@ -93,28 +100,23 @@ def summary_fn(sum_inp):
     lecture_summary_prompt = PromptTemplate(
     input_variables=["raw_text"],
     template="""
-        You are an assistant that summarizes class lectures.
+You are a summarizer for class lectures.
 
-        Given the following raw transcript of a lecture, generate a clear and concise summary. The raw input may contain:
-        - Spoken or conversational language
-        - Minor repetition or filler words
-        - Mixed topics or transitions
+Given a raw lecture transcript, cleanly extract and present the key points or concepts discussed. Focus only on the actual content of the transcript.
 
-        Instructions:
-        - Identify the **main topic(s)** of the lecture.
-        - List out the **key points**, concepts, or examples discussed.
-        - Use clear and concise language.
-        - Output should be in paragraph form or bullet points (if appropriate).
-        - Do not include irrelevant filler content or broken sentences.
-        - Do not hallucinate extra content — only summarize what's in the transcript.
+Rules:
+- Remove repetition and filler words.
+- Keep only meaningful academic content.
+- Present the summary in clean paragraph form or bullet points.
+- Do not include any explanation, instruction, headers, or labels in the output.
+-Do not include any additional text like "Here is your result" or triple quotes.
+- Return the result only, nothing else.
 
-        Transcript:
-        \"\"\"
-        {raw_text}
-        \"\"\"
-
-        Summary:
-        """
+Transcript:
+\"\"\" 
+{raw_text} 
+\"\"\"
+       """
     )
     summary_chain = LLMChain(llm=llm, prompt=lecture_summary_prompt)
     sum_output = summary_chain.run({"raw_text": sum_inp})
@@ -130,10 +132,10 @@ Alright, so today we're going to dive into the concept of linear regression, whi
 """
 
 
+# exm = "So today we’re going to start by revisiting the concept of quadratic equations, which we’ve already seen in earlier classes. Remember, a standard quadratic equation takes the form a x squared plus b x plus c equals zero, where a, b, and c are real numbers and a is not equal to zero. Now, the most common method we use to solve this is the quadratic formula, which is given by x equals negative b plus or minus the square root of b squared minus four a c, all divided by two a. As I mentioned before, this formula comes from completing the square, and it’s useful in almost every case. Also, keep in mind that the expression under the square root, which is b squared minus four a c, is called the discriminant, and it tells us about the nature of the roots. If it’s positive, we get two real and distinct solutions. If it’s zero, the roots are real and equal. And if it’s negative, the equation has two complex roots. Alright, now shifting gears a bit, let’s talk briefly about distance in two-dimensional space. Suppose we have two points, say x one comma y one and x two comma y two — the distance between them is given by the formula square root of open parenthesis x two minus x one close parenthesis squared plus open parenthesis y two minus y one close parenthesis squared. That’s basically the Pythagorean theorem applied in coordinate geometry. We use this often when analyzing geometric shapes or modeling physical systems. Okay, before we move on, just quickly jot that down and let me know if you need a recap on any of those formulas."
 
 
-
-
+# print(summary_fn(sum_inp))
 
 # print("Summary output:\n",sum_output)
 
