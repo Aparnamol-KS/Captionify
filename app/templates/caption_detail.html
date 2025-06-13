@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% include 'navbar.html' %}
+
+{% block style %}
+<style>
+    body {
+        background-color: #000000;
+        font-family: 'Merriweather', serif;
+        color: white;
+        padding-top: 70px;
+    }
+
+    /* Hide Scrollbar */
+    ::-webkit-scrollbar {
+        display: none;
+    }
+
+    .container {
+        max-width: 75%;
+        margin: auto;
+    }
+
+    /* Page Heading */
+    .heading {
+        font-size: 3rem;
+        text-align: center;
+        font-family: fantasy;
+        color: #66FCF1;
+        font-weight: lighter;
+        margin-bottom: 40px;
+    }
+
+    /* Summary & Full Transcription Box */
+    .content-box {
+        background-color: #1a1a1a;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px #66FCF1;
+        margin-bottom: 25px;
+    }
+
+    .content-box:hover {
+        box-shadow: 0 6px 15px #66FCF1;
+    }
+
+    .content-title {
+        color: #66FCF1;
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+    }
+
+    .content-text {
+        font-size: 1.2rem;
+        line-height: 1.6;
+    }
+
+    /* Back Button */
+    .button {
+        background-color: #0B0C10;
+        border: 2px solid #66FCF1;
+        color: white;
+        padding: 15px;
+        font-size: 25px;
+        text-align: center;
+        cursor: pointer;
+        border-radius: 8px;
+        margin: 0 10px;
+        box-shadow: 0px 4px 6px rgba(232, 228, 228, 0.689);
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+
+    .button:hover {
+        transform: scale(1.05);
+    }
+
+    .btn-back>a>i, .btn-back>i {
+        color: #0B0C10;
+        font-size: 28px;
+    }
+
+    .btn-back {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 15px 30px;
+        background-color: #66FCF1;
+        color: #0B0C10;
+        text-decoration: none;
+        font-size: 25px;
+        font-weight: 600;
+        border-radius: 20px;
+        transition: transform 0.3s;
+
+    }
+    .btn-back:hover {
+        transform: scale(1.05);
+        color: #0B0C10;
+        text-decoration: none;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .content-box {
+            font-size: 16px;
+            padding: 15px;
+        }
+    }
+</style>
+{% endblock style %}
+
+{% block content %}
+<div class="container">
+    <div class="text-center heading">Caption Details</div>
+
+    <div class="content-box">
+        <h2 class="content-title">{{caption.caption_name}}</h2>
+        <p class="content-text">{{ caption.text }}</p>
+    </div>
+
+    <div class="row justify-content-center w-100 text-center">
+        <div class="col-md-2 col-6 mb-2">
+            <button class="btn-back  w-100 text-center" title='Back to Captions'><a
+                    href="{{ url_for('main.captions_list') }}"><i
+                        class="fa-solid fa-right-from-bracket"></i></a></button>
+        </div>
+        <div class="col-md-2 col-6 mb-2">
+            <input type="hidden" id="caption-id" name="caption-detail" value="{{ caption.id }}">
+            <button class="btn-back w-100 text-center" onclick="showInputBox()"
+                title="Rename!">
+                <i class="fa-solid fa-pen"></i>
+            </button>
+
+
+        </div>
+
+    </div>
+
+</div>
+<div class="custom-css modal fade" id="inputModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form id="saveForm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" style="color: #000000;">Rename</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="userNameInput" name="caption_name" class="form-control"
+                        placeholder="Enter caption name" required />
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let currentCaptionId = null;
+    const modalEl = new bootstrap.Modal(document.getElementById('inputModal'));
+
+    function showInputBox() {
+        const caption_id = document.getElementById('caption-id').value
+        currentCaptionId = caption_id;
+        if(caption_id){
+            console.log("Caption ID:", caption_id);
+        }else{
+            console.log('Nonee')
+        }
+        modalEl.show();
+        setTimeout(() => {
+            document.getElementById('userNameInput').focus();
+        }, 300);
+    }
+
+    document.getElementById('saveForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const name = document.getElementById('userNameInput').value;
+        const formData = new FormData();
+        formData.append('caption_name', name);
+
+        fetch(`/rename_caption/${currentCaptionId}`, {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => {
+                if (response.ok) return response.json();
+                else throw new Error("Failed to update");
+            })
+            .then(data => {
+                console.log('Success:', data);
+                modalEl.hide();
+                // Optionally reload or update the DOM
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    });
+
+</script>
+{% endblock content %}

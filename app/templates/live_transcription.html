@@ -149,16 +149,17 @@
                 <form action="{{ url_for('main.save_pdf') }}" method="post" onsubmit="prepareTranscription()"
                     class="w-100">
                     <input type="hidden" id="transcription_text" name="transcription_text">
-                    <button type="submit" title="Save as PDF" class="button w-100"><i
+                    <button id = "save-pdf-btn" type="submit" title="Save as PDF" class="button w-100"><i
                             class="fa-solid fa-file-pdf"></i></button>
                 </form>
             </div>
 
             <!-- Summarize -->
             <div class="col-md-1 col-6 mb-2">
-                <form action="/summary" method="post" class="w-100" onsubmit="prepareTranscriptionForSummarize()">
+                <form action="{{ url_for('main.summary') }}" method="post" class="w-100" onsubmit="prepareTranscriptionForSummarize()" >
+                    <input type="hidden" name="caption_name" id="userNameInput-caption">
                     <input type="hidden" name="transcript" id="transcript-input">
-                    <button type="submit" title="Summarize!" class="button w-100"><i
+                    <button id="summary-btn" type="submit" title="Summarize!" class="button w-100"><i
                             class="fa-solid fa-book"></i></button>
                 </form>
             </div>
@@ -236,8 +237,8 @@
                 document.getElementById("stop-btn").disabled = false;
                 document.getElementById("clear-btn").disabled = true;
                 document.getElementById("edit-btn").disabled = true;
-                document.querySelector("form[action='/summary'] button").disabled = true;
-                document.querySelector("form[action='{{ url_for('main.save_pdf') }}'] button").disabled = true;
+                document.getElementById("summary-btn").disabled = true;
+                document.getElementById('save-pdf-btn').disabled = true;
             })
             .catch(error => console.error("Error starting recording:", error));
     }
@@ -247,12 +248,6 @@
         fetch('/live_transcription/stop_recording')
             .then(response => response.json())
             .then(data => {
-                // if (data.transcription) {
-                //     document.getElementById("transcription").innerText = data.transcription;
-                //     updateButtonState();
-                // } else {
-                //     alert("Error: No transcription received.");
-                // }
                 let startBtn = document.getElementById("start-btn");
                 startBtn.disabled = false;
 
@@ -261,8 +256,8 @@
                 document.getElementById("stop-btn").disabled = true;
                 document.getElementById("clear-btn").disabled = false;
                 document.getElementById("edit-btn").disabled = false;
-                document.querySelector("form[action='/summary'] button").disabled = false;
-                document.querySelector("form[action='{{ url_for('main.save_pdf') }}'] button").disabled = false;
+                document.getElementById("summary-btn").disabled = false;
+                document.getElementById('save-pdf-btn').disabled = false;
             })
             .catch(error => console.error("Error stopping recording:", error));
     }
@@ -320,6 +315,8 @@
 
     function prepareTranscriptionForSummarize() {
         document.getElementById("transcript-input").value = document.getElementById("transcription").innerText;
+        document.getElementById("userNameInput-caption").value = document.getElementById('userNameInput').value;
+
     }
 
     function prepareTranscriptionForSave() {
@@ -346,7 +343,7 @@
         modalEl.show();
         setTimeout(() => {
             document.getElementById('userNameInput').focus();
-        }, 500);
+        }, 200);
     }
 
 

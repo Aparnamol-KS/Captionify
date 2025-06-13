@@ -12,7 +12,6 @@ from io import BytesIO
 from datetime import datetime
 from difflib import SequenceMatcher
 import os
-import markdown
 
 
 from app import socketio 
@@ -33,6 +32,11 @@ initialize_services()
 @main.route('/')
 def home():
     return render_template("home.html")
+
+@main.route('/live_transcription')
+@login_required
+def live_transcription():
+    return render_template("live_transcription.html") 
 
 @main.route('/live_transcription/start_recording', methods=['GET'])
 def start_recording():
@@ -132,6 +136,113 @@ def save_pdf():
     flash("Error generating PDF.", "danger")
     return redirect(url_for("main.live_transcription"))
 
+
+
+
+@main.route('/registration', methods=['GET', 'POST'])
+def register():
+    form = RegistrationForm()
+    
+    if form.validate_on_submit():
+        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        is_admin = True if form.username.data == "Aparna" else False
+
+        new_user = User(username=form.username.data, email=form.email.data, password=hashed_password, is_admin=is_admin)
+        db.session.add(new_user)
+        db.session.commit()
+        
+        flash('Account created successfully!', 'success')
+        return redirect(url_for('main.login'))  
+    
+    return render_template("register.html", title='Register', form=form)
+
+
+@main.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user and bcrypt.check_password_hash(user.password, form.password.data):
+            login_user(user)
+            flash('Login successful!', 'success')
+            return redirect(url_for('main.home'))
+        else:
+            flash('Login failed. Check your email and password.', 'danger')
+    return render_template("login.html", title='Login', form=form)
+
+
+@main.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    if request.method == 'POST':
+        # Get form data
+        name = request.form.get('name')
+        email = request.form.get('email')
+       
+       # Update current user's details instead of creating a new user
+        current_user.username = name
+        current_user.email = email
+
+        # Commit changes to the database
+        db.session.commit()
+
+        flash('Profile updated successfully!', 'success')
+        return redirect(url_for('main.profile'))  # Reload the profile page
+
+    return render_template("profile.html", user=current_user) 
+
+
+@main.route('/logout')
+def logout():
+    logout_user()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('main.home'))
+
+
+#-----------------------Summaries-------------------------
+
+@main.route('/summary', methods=['POST'])
+@login_required
+def summary():
+    try:
+        caption_name = request.form.get('caption_name')
+        if caption_name:
+            retrieved_caption = Caption.query.filter_by(caption_name=caption_name).first()
+            if not retrieved_caption:
+                flash("Caption not found.", "danger")
+                return render_template("summary.html", summary="No summary available.")
+            content = retrieved_caption.text
+            summarized_content = summary_fn(content)
+            cleaned_summary = clean_transcription(summarized_content)
+            print(caption_name)
+            print(content)
+            print(cleaned_summary)
+            print("✅ Summary generated successfully!")
+
+            new_summary = Summary(
+                caption_id = retrieved_caption.id,
+                summary_name = f"Summary of {retrieved_caption.caption_name}",
+                summary_text = cleaned_summary,
+                created_at = datetime.utcnow()
+            )
+
+            db.session.add(new_summary)
+            db.session.commit()
+            flash("Summary saved successfully!", "success")
+            return render_template("summary.html", summary=cleaned_summary)
+        else:
+            flash("Save transcription before summarizing", "danger")
+            return render_template("summary.html", summary="No summary available.")
+
+    except Exception as e:
+        print("Error:", e)
+        return jsonify({"error": str(e)}), 500
+
+
+
+
+
+
 @main.route('/summary/make_pdf', methods=['POST'])
 def save_summary_pdf():
     """Generate a PDF from summarized transcription text and store it in the database."""
@@ -176,128 +287,15 @@ def save_summary_pdf():
     return redirect(url_for("main.summary"))
 
 
-@main.route('/summary', methods=['POST', 'GET'])
-@login_required
-
-def markdown_to_html(text):
-    return markdown.markdown(text)
-
-def summary():
-    if request.method == 'POST':
-        transcript = request.form.get("transcript", "").strip()
-
-        if not transcript:
-            flash("No text provided for summarization.", "warning")
-            return redirect(url_for("main.summary"))
-    
-        # Perform summarization
-        summary_text = summary_fn(transcript)  
-        print("✅ Summary generated successfully!") 
-        # Fetch all captions for the user
-        user_captions = Caption.query.filter_by(user_id=current_user.id).all()
-
-        # Find a caption with similar text (similarity > 90%)
-        existing_caption = None
-        for caption in user_captions:
-            if text_similarity(transcript, caption.text) > 0.9:
-                existing_caption = caption
-                break
-
-        if not existing_caption:
-            flash("No matching caption found! Creating a new one...", "info")
-            existing_caption = Caption(text=transcript, user_id=current_user.id)
-            db.session.add(existing_caption)
-            db.session.commit()
-
-        # Save summary to the database
-        new_summary = Summary(caption_id=existing_caption.id, summary_text=summary_text)
-        db.session.add(new_summary)
-        db.session.commit()
-        
-
-        html_summary = markdown_to_html(summary_text)
-        flash("Summary saved successfully!", "success")
-        return render_template("summary.html", summary=html_summary)
-
-    return render_template("summary.html", summary="No summary available.")
-    
-
-def text_similarity(text1, text2):
-    """Returns a similarity ratio between two texts."""
-    return SequenceMatcher(None, text1, text2).ratio()
-
-# Registration page
-@main.route('/registration', methods=['GET', 'POST'])
-def register():
-    form = RegistrationForm()
-    
-    if form.validate_on_submit():
-        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        is_admin = True if form.username.data == "Aparna" else False
-
-        new_user = User(username=form.username.data, email=form.email.data, password=hashed_password, is_admin=is_admin)
-        db.session.add(new_user)
-        db.session.commit()
-        
-        flash('Account created successfully!', 'success')
-        return redirect(url_for('main.login'))  
-    
-    return render_template("register.html", title='Register', form=form)
-
-
-# Login page
-@main.route('/login', methods=['GET', 'POST'])
-def login():
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
-        if user and bcrypt.check_password_hash(user.password, form.password.data):
-            login_user(user)
-            flash('Login successful!', 'success')
-            return redirect(url_for('main.home'))
-        else:
-            flash('Login failed. Check your email and password.', 'danger')
-    return render_template("login.html", title='Login', form=form)
-
-
-@main.route('/profile', methods=['GET', 'POST'])
-@login_required
-def profile():
-    if request.method == 'POST':
-        # Get form data
-        name = request.form.get('name')
-        email = request.form.get('email')
-       
-       # Update current user's details instead of creating a new user
-        current_user.username = name
-        current_user.email = email
-
-        # Commit changes to the database
-        db.session.commit()
-
-        flash('Profile updated successfully!', 'success')
-        return redirect(url_for('main.profile'))  # Reload the profile page
-
-    return render_template("profile.html", user=current_user) 
-
-
-@main.route('/logout')
-def logout():
-    logout_user()
-    flash('You have been logged out.', 'info')
-    return redirect(url_for('main.home'))
-
-
-@main.route('/pdfs')
-@login_required
-def pdfs():
-    pdf_files = PDFUpload.query.filter_by(user_id=current_user.id).all()  
-    return render_template("pdfs.html", pdfs=pdf_files)
-
 @main.route('/summary_list')
 @login_required
 def summary_list():
-    summaries = db.session.query(Summary, Caption.timestamp).join(Caption).filter(Caption.user_id == current_user.id).order_by(Summary.id.desc()).all()
+    summaries = (
+        db.session.query(Summary)
+        .join(Caption)
+        .filter(Caption.user_id == current_user.id)
+        .all()
+    )
     return render_template("summary_list.html", summaries=summaries)
 
 @main.route('/summary_list/<int:summary_id>')
@@ -306,7 +304,12 @@ def view_summary(summary_id):
     caption = Caption.query.get_or_404(summary.caption_id)  # Get corresponding caption
     return render_template('summary_detail.html', summary=summary, caption=caption)
 
-
+# --------------------PDF------------------------
+@main.route('/pdfs')
+@login_required
+def pdfs():
+    pdf_files = PDFUpload.query.filter_by(user_id=current_user.id).all()  
+    return render_template("pdfs.html", pdfs=pdf_files)
 
 @main.route('/view_pdf/<int:pdf_id>')
 @login_required
@@ -321,7 +324,34 @@ def view_pdf(pdf_id):
     return send_from_directory(pdf_directory, pdf.filename)
 
 
-# Error Handlers
+# --------------------Captions---------------------
+
+@main.route('/caption_list')
+@login_required
+def captions_list():
+    captions = Caption.query.filter(Caption.user_id == current_user.id).all()
+    return render_template("captions_list.html", captions_info=captions)
+
+
+@main.route('/caption_list/<int:caption_id>')
+def view_caption(caption_id):
+    caption = Caption.query.get_or_404(caption_id)
+    return render_template('caption_detail.html', caption = caption)
+
+
+@main.route('/rename_caption/<int:caption_id>', methods=['POST'])
+def rename(caption_id):
+    rename = request.form.get('caption_name')
+    caption = Caption.query.get_or_404(caption_id)
+    caption.caption_name = rename
+    db.session.commit()
+    flash("Transcription name updated successfully!", "success")
+    return jsonify({"status": "Data renamed successfully"})
+
+    
+
+
+# -------------------Error Handlers------------------------------
 @main.app_errorhandler(404)  
 def page_not_found(e):
     return render_template("404.html"), 404
