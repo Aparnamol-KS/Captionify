@@ -24,6 +24,27 @@ class StylishPDF(FPDF):
         self.set_text_color(100, 100, 100)  
         self.cell(0, 10, f"Page {self.page_no()}", align="C") 
 
+# def generate_pdf(transcription_text, filename="transcription.pdf"):
+#     if not transcription_text.strip():
+#         print("No content to generate PDF.")
+#         return None
+#     pdf = StylishPDF()
+#     pdf.set_auto_page_break(auto=True, margin=20)  
+#     pdf.alias_nb_pages()  
+#     pdf.add_page() 
+#     pdf.set_font("Times", size=12) 
+#     pdf.set_text_color(30, 30, 30)
+#     pdf.multi_cell(0, 8, transcription_text, align="J")
+#     UPLOAD_FOLDER = os.path.join(current_app.root_path, 'uploads')
+#     os.makedirs(UPLOAD_FOLDER, exist_ok=True)  
+#     pdf_path = os.path.join(UPLOAD_FOLDER, filename)
+#     pdf.output(pdf_path, "F")
+#     print(f"📄 PDF saved as: {pdf_path}") 
+#     return pdf_path  
+
+
+
+
 def generate_pdf(transcription_text, filename="transcription.pdf"):
     if not transcription_text.strip():
         print("No content to generate PDF.")
@@ -35,16 +56,19 @@ def generate_pdf(transcription_text, filename="transcription.pdf"):
     pdf.set_font("Times", size=12) 
     pdf.set_text_color(30, 30, 30)
     pdf.multi_cell(0, 8, transcription_text, align="J")
-    UPLOAD_FOLDER = os.path.join(current_app.root_path, 'uploads')
+
+    # Handle both inside and outside Flask
+    try:
+        base_path = current_app.root_path
+    except RuntimeError:
+        base_path = os.getcwd()  # fallback for testing
+
+    UPLOAD_FOLDER = os.path.join(base_path, 'uploads')
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)  
     pdf_path = os.path.join(UPLOAD_FOLDER, filename)
     pdf.output(pdf_path, "F")
     print(f"📄 PDF saved as: {pdf_path}") 
-    return pdf_path  
-
-
-
-
+    return pdf_path
 
 
 
@@ -53,12 +77,10 @@ def generate_pdf(transcription_text, filename="transcription.pdf"):
 
 
 if __name__ == "__main__":
-    sample_text = """World War or the Second World War (1 September 1939 to 2 September 1945) was a global conflict 
-    between two coalitions: the Allies and the Axis powers. Nearly all of the world's countries participated, with many 
-    nations mobilising all resources in pursuit of total war. Tanks and aircraft played major roles, enabling the 
-    strategic bombing of cities and delivery of the first and only nuclear weapons ever used in war. World War II was 
-    the deadliest conflict in history, resulting in 70 to 85 million deaths, more than half of which were civilians. 
-    Millions died in genocides, including the Holocaust, and by massacres, starvation, and disease. After the Allied 
-    victory, Germany, Austria, Japan, and Korea were occupied, and German and Japanese leaders were tried for war crimes."""
+    sample_text = """So today we’re going to start by revisiting the concept of quadratic equations, 
+    which we’ve already seen in earlier classes. Remember, a standard quadratic equation 
+    takes the form \(ax^2 + bx + c = 0\), where \(a\), \(b\), and \(c\) are real numbers and \(a \neq 0\). Now, 
+    the most common method we use to solve this is the quadratic formula, which 
+    is given by \(x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\). [...]"""
     
     generate_pdf(sample_text)  # Generate the sample PDF

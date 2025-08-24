@@ -79,23 +79,22 @@
 {% endblock style %}
 
 {% block content %}
-<!-- 🔹 Summary List -->
 <div class="container">
-    <div class="heading">Summaries</div>
+    <div class="heading">Recorded Captions</div>
 
-    {% if summaries %}
-    {% for summary in summaries %}
+    {% if captions_info %}
+    {% for caption in captions_info %}
     <div class="summary-card">
-        <a href="{{ url_for('main.view_summary', summary_id=summary.id) }}">
-            <h3 style="color: #66FCF1;"><strong>{{summary.summary_name}}</strong></h2>
-            <p class="summary-text">{{ summary.summary_text[:80] }}.....</p>
-            <p class="timestamp">Created on: {{ summary.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+        <a href="{{ url_for('main.view_caption', caption_id=caption.id) }}">
+            <h3 style="color: #66FCF1;"><strong>{{caption.caption_name}}</strong></h2>
+            <p class="summary-text">{{ caption.text[:80] }}.....</p>
+            <p class="timestamp">Created on: {{ caption.timestamp.strftime('%Y-%m-%d %H:%M') }}</p>
         </a>
     </div>
     {% endfor %}
 
     {% else %}
-    <p class="no-summary">No summaries available.</p>
+    <p class="no-summary">No Captions available.</p>
     {% endif %}
 </div>
 {% endblock content %}

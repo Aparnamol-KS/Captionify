@@ -7,19 +7,19 @@ from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO
 from app.utiles.transcriber import SpeechTranscriber
 from app.utiles.pdf_generator import generate_pdf
-from app.utiles.summarizer import TextSummarizer 
+from app.utiles.Langchain import summary_fn,clean_transcription
 from io import BytesIO
 from datetime import datetime
 from difflib import SequenceMatcher
 import os
 
+
 from app import socketio 
-main = Blueprint('main', __name__)  # Define Blueprint
+main = Blueprint('main', __name__) 
 
 
 # Initialize global variables
 transcriber = None
-summarizer = None  # Lazy loading
 
 
 def initialize_services():
@@ -32,6 +32,11 @@ initialize_services()
 @main.route('/')
 def home():
     return render_template("home.html")
+
+@main.route('/live_transcription')
+@login_required
+def live_transcription():
+    return render_template("live_transcription.html") 
 
 @main.route('/live_transcription/start_recording', methods=['GET'])
 def start_recording():
@@ -53,102 +58,40 @@ def stop_recording():
             flash("No transcription recorded!", "warning")
             return jsonify({"status": "No transcription recorded."})
 
-        # Fetch all captions for the user
-        user_captions = Caption.query.filter_by(user_id=current_user.id).all()
 
-        # Find a caption with similar text (similarity > 90%)
-        existing_caption = None
-        for caption in user_captions:
-            if text_similarity(full_text, caption.text) > 0.9:
-                existing_caption = caption
-                break
-
-        if existing_caption:
-            # Update the existing transcription
-            existing_caption.text = full_text
-            existing_caption.timestamp = datetime.utcnow()  # Update timestamp
-            
-        else:
-            # Create a new transcription entry
-            new_caption = Caption(
-                text=full_text,
-                user_id=current_user.id,
-                timestamp=datetime.utcnow()
-            )
-            db.session.add(new_caption)
-
-        db.session.commit()  # Commit changes to database
-
-        return jsonify({
-            "status": "Recording stopped",
-            "message": "Transcription saved!",
-            "transcription": full_text
-        })
-
-    else:
-        flash("Error: Transcriber not initialized!", "danger")
-        return jsonify({
-            "status": "Error",
-            "message": "Transcriber not initialized"
-        }), 500
-
-
-
-@main.route('/edit_caption/<int:caption_id>', methods=['POST'])
+@main.route('/live_transcription/save_to_db', methods=['POST'])
 @login_required
-def edit_caption(caption_id):
-    """Updates the transcription text in the database or creates a new one if not found."""
-    new_text = request.form.get("edited_text")
+def save_to_db():
+    try:
+        caption_name = request.form.get('caption_name')
+        if caption_name:
+            content = request.form.get('content')
+            converted_text = clean_transcription(content)
 
-    if not new_text or not new_text.strip():
-        flash("Edited text cannot be empty!", "warning")
-        return redirect(url_for("main.live_transcription"))  # Adjust as needed
-
-    # Try to fetch the caption from the database
-    caption = Caption.query.get(caption_id)
-
-    if caption:
-        # Ensure only the owner can edit
-        if caption.user_id != current_user.id:
-            flash("Unauthorized action!", "danger")
-            return redirect(url_for("main.live_transcription"))
-
-        # Update existing caption
-        caption.text = new_text
-        caption.timestamp = datetime.utcnow()  # Update timestamp
-        flash("Transcription updated successfully!", "success")
-
-    else:
-        # If caption does not exist, create a new one
-        new_caption = Caption(
-            text=new_text,
-            user_id=current_user.id,
-            timestamp=datetime.utcnow()
-        )
-        db.session.add(new_caption)
-        flash("New transcription saved!", "success")
-
-    db.session.commit()  # Save changes
-
-    return redirect(url_for("main.live_transcription"))  # Adjust as needed
-
-@main.route('/add_caption', methods=['POST'])
-@login_required
-def add_caption():
-    """Creates a new caption if none exists."""
-    new_text = request.form.get("edited_text")
-
-    if not new_text or not new_text.strip():
-        flash("Caption text cannot be empty!", "warning")
-        return redirect(url_for("main.live_transcription"))
-
-    # Create and store new caption
-    new_caption = Caption(text=new_text, user_id=current_user.id)
-    db.session.add(new_caption)
-    db.session.commit()
-
-    flash("Caption saved successfully!", "success")
-    return redirect(url_for("main.live_transcription"))
+            retrieved_caption = Caption.query.filter_by(caption_name=caption_name).first()
+            if retrieved_caption:
+                # edit the existing one
+                retrieved_caption.text = converted_text
+                retrieved_caption.timestamp = datetime.utcnow()
+                db.session.commit()
+                flash("Transcription updated successfully!", "success")
+                return jsonify({"status": "Data edited successfully"})
+            else:
+                # Create new transcription entry
+                new_caption = Caption(
+                    caption_name = caption_name,
+                    text=converted_text,
+                    user_id=current_user.id,
+                    timestamp=datetime.utcnow()
+                )
+                db.session.add(new_caption)
+                db.session.commit() 
+                flash("New transcription saved!", "success")
+                return jsonify({"status": "Data successfully stored"})
+    except Exception as e:
+        # Log error in terminal
+        print("Error:", e)
+        return jsonify({"error": str(e)}), 500
 
 
 @main.route('/live_transcription/make_pdf', methods=['POST'])
@@ -193,6 +136,113 @@ def save_pdf():
     flash("Error generating PDF.", "danger")
     return redirect(url_for("main.live_transcription"))
 
+
+
+
+@main.route('/registration', methods=['GET', 'POST'])
+def register():
+    form = RegistrationForm()
+    
+    if form.validate_on_submit():
+        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        is_admin = True if form.username.data == "Aparna" else False
+
+        new_user = User(username=form.username.data, email=form.email.data, password=hashed_password, is_admin=is_admin)
+        db.session.add(new_user)
+        db.session.commit()
+        
+        flash('Account created successfully!', 'success')
+        return redirect(url_for('main.login'))  
+    
+    return render_template("register.html", title='Register', form=form)
+
+
+@main.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user and bcrypt.check_password_hash(user.password, form.password.data):
+            login_user(user)
+            flash('Login successful!', 'success')
+            return redirect(url_for('main.home'))
+        else:
+            flash('Login failed. Check your email and password.', 'danger')
+    return render_template("login.html", title='Login', form=form)
+
+
+@main.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    if request.method == 'POST':
+        # Get form data
+        name = request.form.get('name')
+        email = request.form.get('email')
+       
+       # Update current user's details instead of creating a new user
+        current_user.username = name
+        current_user.email = email
+
+        # Commit changes to the database
+        db.session.commit()
+
+        flash('Profile updated successfully!', 'success')
+        return redirect(url_for('main.profile'))  # Reload the profile page
+
+    return render_template("profile.html", user=current_user) 
+
+
+@main.route('/logout')
+def logout():
+    logout_user()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('main.home'))
+
+
+#-----------------------Summaries-------------------------
+
+@main.route('/summary', methods=['POST'])
+@login_required
+def summary():
+    try:
+        caption_name = request.form.get('caption_name')
+        if caption_name:
+            retrieved_caption = Caption.query.filter_by(caption_name=caption_name).first()
+            if not retrieved_caption:
+                flash("Caption not found.", "danger")
+                return render_template("summary.html", summary="No summary available.")
+            content = retrieved_caption.text
+            summarized_content = summary_fn(content)
+            cleaned_summary = clean_transcription(summarized_content)
+            print(caption_name)
+            print(content)
+            print(cleaned_summary)
+            print("✅ Summary generated successfully!")
+
+            new_summary = Summary(
+                caption_id = retrieved_caption.id,
+                summary_name = f"Summary of {retrieved_caption.caption_name}",
+                summary_text = cleaned_summary,
+                created_at = datetime.utcnow()
+            )
+
+            db.session.add(new_summary)
+            db.session.commit()
+            flash("Summary saved successfully!", "success")
+            return render_template("summary.html", summary=cleaned_summary)
+        else:
+            flash("Save transcription before summarizing", "danger")
+            return render_template("summary.html", summary="No summary available.")
+
+    except Exception as e:
+        print("Error:", e)
+        return jsonify({"error": str(e)}), 500
+
+
+
+
+
+
 @main.route('/summary/make_pdf', methods=['POST'])
 def save_summary_pdf():
     """Generate a PDF from summarized transcription text and store it in the database."""
@@ -236,138 +286,16 @@ def save_summary_pdf():
     flash("Error generating summarized PDF.", "danger")
     return redirect(url_for("main.summary"))
 
-@main.route('/live_transcription')
-@login_required
-def live_transcription():
-    """Renders the live transcription page and fetches the latest caption if available."""
-    caption = Caption.query.filter_by(user_id=current_user.id).order_by(Caption.timestamp.desc()).first()  # Get the latest caption
-
-    return render_template("live_transcription.html", caption=caption)  
-
-@main.route('/summary', methods=['POST', 'GET'])
-@login_required
-
-def summary():
-    if request.method == 'POST':
-        transcript = request.form.get("transcript", "").strip()
-
-        global summarizer  
-        if summarizer is None:
-            summarizer = TextSummarizer()
-
-        if not transcript:
-            flash("No text provided for summarization.", "warning")
-            return redirect(url_for("main.summary"))
-
-        # Perform summarization
-        summary_text = summarizer.summarize(transcript)  
-        print("✅ Summary generated successfully!")  
-
-        # Fetch all captions for the user
-        user_captions = Caption.query.filter_by(user_id=current_user.id).all()
-
-        # Find a caption with similar text (similarity > 90%)
-        existing_caption = None
-        for caption in user_captions:
-            if text_similarity(transcript, caption.text) > 0.9:
-                existing_caption = caption
-                break
-
-        if not existing_caption:
-            flash("No matching caption found! Creating a new one...", "info")
-            existing_caption = Caption(text=transcript, user_id=current_user.id)
-            db.session.add(existing_caption)
-            db.session.commit()
-
-        # Save summary to the database
-        new_summary = Summary(caption_id=existing_caption.id, summary_text=summary_text)
-        db.session.add(new_summary)
-        db.session.commit()
-
-        flash("Summary saved successfully!", "success")
-        return render_template("summary.html", summary=summary_text)
-
-    return render_template("summary.html", summary="No summary available.")
-def text_similarity(text1, text2):
-    """Returns a similarity ratio between two texts."""
-    return SequenceMatcher(None, text1, text2).ratio()
-
-# Registration page
-@main.route('/registration', methods=['GET', 'POST'])
-def register():
-    form = RegistrationForm()
-    
-    if form.validate_on_submit():
-        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        is_admin = True if form.username.data == "Aparna" else False
-
-        new_user = User(username=form.username.data, email=form.email.data, password=hashed_password, is_admin=is_admin)
-        db.session.add(new_user)
-        db.session.commit()
-        
-        flash('Account created successfully!', 'success')
-        return redirect(url_for('main.login'))  
-    
-    return render_template("register.html", title='Register', form=form)
-
-
-# Login page
-@main.route('/login', methods=['GET', 'POST'])
-def login():
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
-        if user and bcrypt.check_password_hash(user.password, form.password.data):
-            login_user(user)
-            flash('Login successful!', 'success')
-            return redirect(url_for('main.home'))
-        else:
-            flash('Login failed. Check your email and password.', 'danger')
-    return render_template("login.html", title='Login', form=form)
-
-
-@main.route('/profile', methods=['GET', 'POST'])
-@login_required
-def profile():
-    if request.method == 'POST':
-        # Get form data
-        name = request.form.get('name')
-        email = request.form.get('email')
-       
-       # Update current user's details instead of creating a new user
-        current_user.username = name
-        current_user.email = email
-
-        # Commit changes to the database
-        db.session.commit()
-
-        flash('Profile updated successfully!', 'success')
-        return redirect(url_for('main.profile'))  # Reload the profile page
-
-    return render_template("profile.html", user=current_user) 
-
-# Logout route
-@main.route('/logout')
-def logout():
-    logout_user()
-    flash('You have been logged out.', 'info')
-    return redirect(url_for('main.home'))
-
-# Index page
-@main.route('/index')
-def index():
-    return render_template("index.html")
-
-@main.route('/pdfs')
-@login_required
-def pdfs():
-    pdf_files = PDFUpload.query.filter_by(user_id=current_user.id).all()  
-    return render_template("pdfs.html", pdfs=pdf_files)
 
 @main.route('/summary_list')
 @login_required
 def summary_list():
-    summaries = db.session.query(Summary, Caption.timestamp).join(Caption).filter(Caption.user_id == current_user.id).order_by(Summary.id.desc()).all()
+    summaries = (
+        db.session.query(Summary)
+        .join(Caption)
+        .filter(Caption.user_id == current_user.id)
+        .all()
+    )
     return render_template("summary_list.html", summaries=summaries)
 
 @main.route('/summary_list/<int:summary_id>')
@@ -376,28 +304,54 @@ def view_summary(summary_id):
     caption = Caption.query.get_or_404(summary.caption_id)  # Get corresponding caption
     return render_template('summary_detail.html', summary=summary, caption=caption)
 
-
+# --------------------PDF------------------------
+@main.route('/pdfs')
+@login_required
+def pdfs():
+    pdf_files = PDFUpload.query.filter_by(user_id=current_user.id).all()  
+    return render_template("pdfs.html", pdfs=pdf_files)
 
 @main.route('/view_pdf/<int:pdf_id>')
 @login_required
 def view_pdf(pdf_id):
-    pdf = PDFUpload.query.get_or_404(pdf_id)  # Fetch the PDF from the database
+    pdf = PDFUpload.query.get_or_404(pdf_id)
     
-    # Ensure the correct directory where PDFs are stored
     pdf_directory = os.path.join(current_app.root_path, 'uploads')  
     
-    # Check if file exists
     if not os.path.exists(os.path.join(pdf_directory, pdf.filename)):
         return "File not found", 404
     
-    # Serve the PDF file
     return send_from_directory(pdf_directory, pdf.filename)
 
 
- 
+# --------------------Captions---------------------
+
+@main.route('/caption_list')
+@login_required
+def captions_list():
+    captions = Caption.query.filter(Caption.user_id == current_user.id).all()
+    return render_template("captions_list.html", captions_info=captions)
 
 
-# Error Handlers
+@main.route('/caption_list/<int:caption_id>')
+def view_caption(caption_id):
+    caption = Caption.query.get_or_404(caption_id)
+    return render_template('caption_detail.html', caption = caption)
+
+
+@main.route('/rename_caption/<int:caption_id>', methods=['POST'])
+def rename(caption_id):
+    rename = request.form.get('caption_name')
+    caption = Caption.query.get_or_404(caption_id)
+    caption.caption_name = rename
+    db.session.commit()
+    flash("Transcription name updated successfully!", "success")
+    return jsonify({"status": "Data renamed successfully"})
+
+    
+
+
+# -------------------Error Handlers------------------------------
 @main.app_errorhandler(404)  
 def page_not_found(e):
     return render_template("404.html"), 404

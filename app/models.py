@@ -22,6 +22,7 @@ class User(db.Model, UserMixin):
 
 class Caption(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    caption_name = db.Column(db.Text,nullable = False)
     text = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -41,6 +42,7 @@ class PDFUpload(db.Model):
 
 class Summary(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    summary_name = db.Column(db.Text,nullable=False)
     caption_id = db.Column(db.Integer, db.ForeignKey('caption.id'), nullable=False)
     summary_text = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
