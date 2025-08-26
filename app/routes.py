@@ -101,20 +101,17 @@ def save_pdf():
 
     if not transcription_text or not transcription_text.strip():
         flash("No transcription available to save.", "warning")
-        return redirect(url_for("main.live_transcription"))  # Redirect back with error
+        return redirect(url_for("main.live_transcription"))  
 
-    # Generate the PDF using existing function
     timestamp = datetime.now().strftime("%Y%m%d")
     pdf_filename = f"{timestamp}_transcription.pdf"
 
-    pdf_path = generate_pdf(transcription_text, pdf_filename)  # Call your existing function
+    pdf_path = generate_pdf(transcription_text, pdf_filename)  
 
     if pdf_path and os.path.exists(pdf_path):
-        # Read PDF as binary data
         with open(pdf_path, "rb") as pdf_file:
             pdf_binary = pdf_file.read()
 
-        # Store the PDF in the database
         new_pdf = PDFUpload(
             filename=pdf_filename,
             pdf_data=pdf_binary,
@@ -123,9 +120,6 @@ def save_pdf():
         db.session.add(new_pdf)
         db.session.commit()
 
-        flash("PDF successfully generated and stored in database!", "success")
-
-        # Optional: Serve the stored PDF for download
         return send_file(
             BytesIO(pdf_binary),    
             as_attachment=True,

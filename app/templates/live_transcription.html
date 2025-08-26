@@ -168,12 +168,12 @@
             <div class="col-md-1 col-6 mb-2">
                 <button id="clear-btn" title="clear" class="button w-100"><i class="fa-solid fa-eraser"></i></button>
             </div>
-
+            <!-- edit and save -->
             <div class="col-md-1 col-6 mb-2">
                 <button type="button" id="edit-btn" title="Edit Transcription" class="button w-100"
                     onclick="toggleEdit()"><i id="editIcon" class="fa-solid fa-pen-to-square"></i></button>
             </div>
-
+            <!-- save to db -->
             <div class="col-md-1 col-6 mb-2">
                 <input type="hidden" id="transcription_text_save" name="transcription_text_save">
                 <button type="submit" id="save-btn" onclick="showInputBox(), prepareTranscriptionForSave()"

@@ -82,6 +82,9 @@ Rules:
 - Do not reword or summarize the paragraph.
 - Do not include any additional text like "Here is your result" or triple quotes.
 - Return the full updated paragraph with math converted, and nothing else.
+- Always use standard LaTeX syntax.
+- For square roots, always use \sqrt{...}.
+- For powers, always use ^{...}.
 
 Input:
 {raw_text}
